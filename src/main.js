@@ -26,6 +26,7 @@ const webgpuStatus = document.getElementById("webgpu-status");
 const btnMicrophone = document.getElementById("btn-microphone");
 const btnTab = document.getElementById("btn-tab");
 const btnStart = document.getElementById("btn-start");
+const btnSummary = document.getElementById("btn-summary");
 const btnDownload = document.getElementById("btn-download");
 const progressContainer = document.getElementById("progress-container");
 const progressFill = document.getElementById("progress-fill");
@@ -149,6 +150,9 @@ function setupEventListeners() {
   // Start/Stop button
   btnStart.addEventListener("click", toggleRecording);
 
+  // Summary button
+  btnSummary.addEventListener("click", generateSummaryPage);
+
   // Download button
   btnDownload.addEventListener("click", downloadTranscript);
 
@@ -233,6 +237,23 @@ function downloadTranscript() {
     return;
   }
   transcriptManager.downloadAsFile("bilingual");
+}
+
+/**
+ * Handle Generate Summary click
+ */
+function generateSummaryPage() {
+  const context = transcriptManager.getAIContext();
+  if (!context || context.trim().length === 0 || context === "No transcript available yet.") {
+    showError(t("no_transcript_error"));
+    return;
+  }
+  
+  // Save transcript to local storage for the summary page to use
+  localStorage.setItem("temp_transcript_summary", context);
+  
+  // Open summary page in a new tab
+  window.open("/pages/summary.html", "_blank");
 }
 
 /**

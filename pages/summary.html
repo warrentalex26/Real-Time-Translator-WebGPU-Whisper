@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resumen de Reunión | TraductorWebGPU</title>
+  <meta name="theme-color" content="#1a1a2e" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/main.scss" />
+</head>
+<body class="summary-page">
+  <div class="app">
+    <!-- Background Effects -->
+    <div class="background-effects">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container summary-container">
+      <header class="header summary-header">
+        <div class="logo">
+          <h1>TraductorWebGPU <span class="version">AI Summary</span></h1>
+        </div>
+        <div class="header-controls">
+          <button id="btn-close" class="secondary-btn">Cerrar Tab</button>
+        </div>
+      </header>
+
+      <section class="summary-card glass-card">
+        <div class="summary-card-header">
+          <h2>📄 Resumen Detallado de la Reunión</h2>
+          <div class="summary-actions">
+            <button id="btn-regenerate" class="icon-btn" title="Regenerar Resumen" disabled>
+              🔄
+            </button>
+            <button id="btn-export-txt" class="icon-btn" title="Exportar a TXT" disabled>
+              📝
+            </button>
+            <button id="btn-export-doc" class="icon-btn" title="Exportar a Word" disabled>
+              📄
+            </button>
+          </div>
+        </div>
+
+        <div class="summary-content-wrapper">
+          <div id="loading-state" class="loading-state">
+            <div class="spinner"></div>
+            <h3>Generando resumen con Inteligencia Artificial...</h3>
+            <p>Esto puede tomar unos segundos dependiendo de la duración de tu reunión y del modelo seleccionado.</p>
+          </div>
+
+          <div id="error-state" class="error-state hidden">
+            <h3>⚠️ Ocurrió un error</h3>
+            <p id="error-message">No se pudo generar el resumen.</p>
+            <button id="btn-retry" class="primary-btn mt-md">Reintentar</button>
+          </div>
+
+          <div id="summary-content" class="summary-content hidden">
+            <!-- El contenido generado por IA se insertará aquí -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/src/summary.js"></script>
+</body>
+</html>

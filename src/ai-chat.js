@@ -11,6 +11,7 @@ const AI_CONFIG = {
   ollama: {
     baseUrl: "http://localhost:11434",
     model: "llama3.2", // Good balance of speed and quality
+    numCtx: 32768, // Configurable context window (default was 2048). 32k is easily handled by an M4 Pro with 24GB RAM.
   },
 
   gemini: {
@@ -126,6 +127,9 @@ async function chatWithOllama(question, transcriptContext) {
         { role: "user", content: question },
       ],
       stream: false,
+      options: {
+        num_ctx: AI_CONFIG.ollama.numCtx,
+      },
     }),
   });
 
@@ -217,5 +221,84 @@ export async function askAboutTranscript(question, transcriptContext) {
     }
 
     return `Error: ${error.message}`;
+  }
+}
+
+/**
+ * Generate a detailed summary of the meeting
+ * @param {string} transcriptContext - The meeting transcript
+ * @returns {Promise<string>} - Detailed AI summary
+ */
+export async function generateSummary(transcriptContext) {
+  if (!transcriptContext || transcriptContext.trim().length === 0) {
+    throw new Error("No hay transcripción disponible para resumir.");
+  }
+
+  const systemPrompt = `You are an expert executive assistant analyzing a meeting transcript. 
+Tu tarea es generar un resumen detallado y estructurado de la reunión en español.
+
+Por favor, estructura tu respuesta en formato Markdown con las siguientes secciones:
+1. **Resumen Ejecutivo**: Un párrafo corto (3-4 líneas) con la esencia de la reunión.
+2. **Puntos Clave Discutidos**: Una lista de los temas principales que se abordaron.
+3. **Decisiones Tomadas**: Cualquier acuerdo o decisión final mencionada en el texto. Si no hay, indícalo.
+4. **Próximos Pasos / Tareas**: Acciones a realizar, asignadas a personas si se mencionan.
+
+Sé profesional, conciso pero suficientemente detallado para que alguien que no asistió pueda entender perfectamente lo que pasó.
+
+TRANSCRIPCIÓN DE LA REUNIÓN:
+${transcriptContext}
+
+RECUERDA: Responde siempre en Español y usa el formato Markdown solicitado.`;
+
+  try {
+    if (AI_CONFIG.provider === "ollama") {
+      const response = await fetch(`${AI_CONFIG.ollama.baseUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_CONFIG.ollama.model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: "Genera el resumen detallado de la reunión según las instrucciones." }
+          ],
+          stream: false,
+          options: {
+            num_ctx: AI_CONFIG.ollama.numCtx,
+          },
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Ollama error: ${response.status} ${response.statusText}`);
+      const data = await response.json();
+      return data.message?.content || "No se pudo generar el resumen.";
+    } else {
+      if (!AI_CONFIG.gemini.apiKey) {
+        throw new Error("Gemini API key no configurada.");
+      }
+
+      const fullPrompt = `${systemPrompt}\n\nGenera el resumen detallado de la reunión según las instrucciones.`;
+      const response = await fetch(
+        `${AI_CONFIG.gemini.baseUrl}/models/${AI_CONFIG.gemini.model}:generateContent?key=${AI_CONFIG.gemini.apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: fullPrompt }] }],
+            generationConfig: { temperature: 0.5, maxOutputTokens: 2048 },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Gemini error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo generar el resumen.";
+    }
+  } catch (error) {
+    console.error("Summary generation error:", error);
+    throw error;
   }
 }
