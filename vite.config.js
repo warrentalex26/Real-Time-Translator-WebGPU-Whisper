@@ -8,6 +8,13 @@ export default defineConfig({
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: "modern-compiler",
+      },
+    },
+  },
   optimizeDeps: {
     exclude: ["@huggingface/transformers"],
   },

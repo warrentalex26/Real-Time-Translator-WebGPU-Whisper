@@ -1,0 +1,19 @@
+// ============================================
+// Utilities: Footer & Error Messages
+// ============================================
+
+.info-footer {
+  text-align: center;
+  padding: var(--spacing-md) 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.error-message {
+  padding: var(--spacing-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--accent-error);
+  text-align: center;
+}

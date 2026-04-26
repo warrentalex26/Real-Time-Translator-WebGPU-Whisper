@@ -100,22 +100,6 @@ Output will be in the `dist/` directory.
 > Cross-Origin-Embedder-Policy: require-corp
 > ```
 
-## 📁 Project Structure
-
-```
-├── index.html              # Main HTML page
-├── src/
-│   ├── main.js             # Application entry point & UI logic
-│   ├── audio-capture.js    # Microphone & tab audio capture
-│   ├── whisper-worker.js   # Web Worker for Whisper transcription
-│   ├── translation.js      # OPUS-MT translation pipeline
-│   ├── transcript-manager.js  # Transcript storage & export
-│   ├── ai-chat.js          # Ollama/Gemini AI chat integration
-│   └── styles.css          # All styles (glassmorphism dark theme)
-├── vite.config.js          # Vite configuration (CORS headers)
-└── package.json
-```
-
 ## 🔒 Privacy & Security
 
 - **No data leaves your browser** — All speech recognition and translation runs locally via WebGPU/WASM
