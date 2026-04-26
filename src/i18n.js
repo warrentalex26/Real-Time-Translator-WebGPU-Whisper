@@ -29,7 +29,19 @@ export const translations = {
     "no_transcript_error": "No transcript available yet. Start a recording first.",
     "empty_question_error": "Please type a question.",
     "ollama_connection_error": "Error connecting to Ollama: {error}\n\nMake sure Ollama is running:\n1. Install Ollama: https://ollama.ai\n2. Run: ollama run llama3.2\n3. Try again",
-    "download_tooltip": "Download transcript"
+    "download_tooltip": "Download transcript",
+    "summary_tooltip": "Generate AI Summary",
+    "close_summary_tooltip": "Close Summary",
+    "summary_title": "Detailed Meeting Summary",
+    "regenerate_tooltip": "Regenerate Summary",
+    "export_txt_tooltip": "Export to TXT",
+    "export_word_tooltip": "Export to Word",
+    "generating_summary": "Generating AI summary...",
+    "generating_note": "This may take a few seconds depending on the meeting length and the selected model.",
+    "error_title": "An error occurred",
+    "error_default": "Could not generate summary.",
+    "retry": "Retry",
+    "missing_transcript_error": "The meeting transcript could not be found. Please return to the homepage and generate the summary again."
   },
   es: {
     "title": "Traductor en Tiempo Real",
@@ -61,7 +73,19 @@ export const translations = {
     "no_transcript_error": "No hay transcripción disponible todavía. Inicia una grabación primero.",
     "empty_question_error": "Por favor, escribe una pregunta.",
     "ollama_connection_error": "Error al conectar con Ollama: {error}\n\nAsegúrate de que Ollama esté corriendo:\n1. Instala Ollama: https://ollama.ai\n2. Ejecuta: ollama run llama3.2\n3. Intenta de nuevo",
-    "download_tooltip": "Descargar transcripción"
+    "download_tooltip": "Descargar transcripción",
+    "summary_tooltip": "Generar Resumen con IA",
+    "close_summary_tooltip": "Cerrar Resumen",
+    "summary_title": "Resumen Detallado de la Reunión",
+    "regenerate_tooltip": "Regenerar Resumen",
+    "export_txt_tooltip": "Exportar a TXT",
+    "export_word_tooltip": "Exportar a Word",
+    "generating_summary": "Generando resumen con Inteligencia Artificial...",
+    "generating_note": "Esto puede tomar unos segundos dependiendo de la duración de tu reunión y del modelo seleccionado.",
+    "error_title": "Ocurrió un error",
+    "error_default": "No se pudo generar el resumen.",
+    "retry": "Reintentar",
+    "missing_transcript_error": "No se encontró la transcripción de la reunión. Por favor, vuelve a la página principal y genera el resumen nuevamente."
   }
 };
 

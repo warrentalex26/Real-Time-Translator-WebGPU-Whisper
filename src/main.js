@@ -20,6 +20,14 @@ import {
   getAIProvider,
 } from "./ai-chat.js";
 import { initI18n, t, getLanguage } from "./i18n.js";
+import { Header } from "./components/Header.js";
+import { Footer } from "./components/Footer.js";
+
+// Inject shared components first
+const appHeader = document.getElementById("app-header");
+const appFooter = document.getElementById("app-footer");
+if (appHeader) appHeader.innerHTML = Header();
+if (appFooter) appFooter.innerHTML = Footer();
 
 // DOM Elements - Main
 const webgpuStatus = document.getElementById("webgpu-status");

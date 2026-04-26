@@ -1,4 +1,14 @@
 import { generateSummary, getAIProvider } from './ai-chat.js';
+import { Header } from "./components/Header.js";
+import { Footer } from "./components/Footer.js";
+import { initI18n, t, getLanguage } from "./i18n.js";
+
+// Inject shared components first
+const appHeader = document.getElementById("app-header");
+const appFooter = document.getElementById("app-footer");
+if (appHeader) appHeader.innerHTML = Header();
+if (appFooter) appFooter.innerHTML = Footer();
+
 // We'll use marked to parse Markdown if available, otherwise fallback to simple regex
 // Let's implement a simple markdown parser for bold, headers, and lists
 function parseMarkdown(text) {
@@ -32,6 +42,8 @@ function parseMarkdown(text) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initI18n(); // Initialize language for the injected header
+
   const loadingState = document.getElementById('loading-state');
   const errorState = document.getElementById('error-state');
   const summaryContent = document.getElementById('summary-content');
@@ -48,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const transcript = localStorage.getItem('temp_transcript_summary');
 
   if (!transcript) {
-    showError("The meeting transcript could not be found. Please return to the homepage and generate the summary again.");
+    showError(t("missing_transcript_error"));
     return;
   }
 
@@ -112,7 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Resumen_Reunion_${formatDate()}.txt`;
+    const prefix = getLanguage() === "es" ? "Resumen_Reunion_" : "Meeting_Summary_";
+    link.download = `${prefix}${formatDate()}.txt`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -121,10 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!rawSummaryText) return;
     
     // Create a basic HTML structure that Word can read
+    const docTitle = getLanguage() === "es" ? "Resumen de Reunión" : "Meeting Summary";
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' 
           xmlns:w='urn:schemas-microsoft-com:office:word' 
           xmlns='http://www.w3.org/TR/REC-html40'>
-          <head><meta charset='utf-8'><title>Resumen de Reunión</title></head><body>`;
+          <head><meta charset='utf-8'><title>${docTitle}</title></head><body>`;
     const footer = "</body></html>";
     const sourceHTML = header + summaryContent.innerHTML + footer;
     
@@ -135,7 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Resumen_Reunion_${formatDate()}.doc`;
+    const prefix = getLanguage() === "es" ? "Resumen_Reunion_" : "Meeting_Summary_";
+    link.download = `${prefix}${formatDate()}.doc`;
     link.click();
     URL.revokeObjectURL(url);
   }
