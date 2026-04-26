@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Traductor en tiempo real con WebGPU - Transcribe y traduce audio de videollamadas al español"
+    />
+    <meta name="theme-color" content="#1a1a2e" />
+    <title>Traductor en Tiempo Real | WebGPU Whisper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Background Effects -->
+      <div class="background-effects">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+      </div>
+
+      <!-- Main Container -->
+      <main class="container">
+        <!-- Header -->
+        <header class="header">
+          <div class="logo">
+            <span class="logo-icon">🎙️</span>
+            <h1>Traductor en Tiempo Real</h1>
+          </div>
+          <div class="status-badge" id="webgpu-status">
+            <span class="status-dot"></span>
+            <span class="status-text">Verificando WebGPU...</span>
+          </div>
+        </header>
+
+        <!-- Control Panel -->
+        <section class="control-panel glass-card">
+          <div class="source-selector">
+            <label class="selector-label">Fuente de Audio</label>
+            <div class="source-buttons">
+              <button
+                class="source-btn active"
+                id="btn-microphone"
+                data-source="microphone"
+              >
+                <span class="btn-icon">🎤</span>
+                <span class="btn-text">Micrófono</span>
+              </button>
+              <button class="source-btn" id="btn-tab" data-source="tab">
+                <span class="btn-icon">🔊</span>
+                <span class="btn-text">Audio de Pestaña</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="model-selector">
+            <label class="selector-label">Modelo Whisper</label>
+            <div class="model-buttons">
+              <button class="model-btn" data-model="tiny">
+                <span class="model-icon">⚡</span>
+                <span class="model-info">
+                  <span class="model-name">Rápido</span>
+                  <span class="model-size">~39MB</span>
+                </span>
+              </button>
+              <button class="model-btn active" data-model="base">
+                <span class="model-icon">⚖️</span>
+                <span class="model-info">
+                  <span class="model-name">Balanceado</span>
+                  <span class="model-size">~74MB</span>
+                </span>
+              </button>
+              <button class="model-btn" data-model="small">
+                <span class="model-icon">🎯</span>
+                <span class="model-info">
+                  <span class="model-name">Preciso</span>
+                  <span class="model-size">~244MB</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="action-controls">
+            <button class="primary-btn" id="btn-start" disabled>
+              <span class="btn-content">
+                <span class="play-icon">▶</span>
+                <span>Iniciar Traducción</span>
+              </span>
+            </button>
+          </div>
+
+          <!-- Model Loading Progress -->
+          <div class="progress-container hidden" id="progress-container">
+            <div class="progress-header">
+              <span class="progress-label">Cargando modelo Whisper...</span>
+              <span class="progress-percent" id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p class="progress-note">
+              Primera vez: ~200MB. Se guardará en caché.
+            </p>
+          </div>
+        </section>
+
+        <!-- Subtitles Display -->
+        <section class="subtitles-panel glass-card">
+          <div class="subtitles-header">
+            <h2>📝 Subtítulos en Tiempo Real</h2>
+            <div class="header-actions">
+              <button class="icon-btn" id="btn-download" title="Descargar transcripción">
+                💾
+              </button>
+              <div class="recording-indicator hidden" id="recording-indicator">
+                <span class="recording-dot"></span>
+                <span>Escuchando...</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="subtitles-container" id="subtitles-container">
+            <div class="empty-state" id="empty-state">
+              <div class="empty-icon">🎧</div>
+              <p>Los subtítulos aparecerán aquí</p>
+              <p class="empty-hint">
+                Selecciona una fuente de audio y presiona "Iniciar Traducción"
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI Chat Panel -->
+        <section class="chat-panel glass-card">
+          <div class="chat-header">
+            <h2>🤖 Pregunta sobre la reunión</h2>
+            <div class="ai-provider-toggle">
+              <button class="provider-btn active" id="btn-ollama" data-provider="ollama">
+                Ollama
+              </button>
+              <button class="provider-btn" id="btn-gemini" data-provider="gemini">
+                Gemini
+              </button>
+            </div>
+          </div>
+
+          <!-- Gemini API Key Input (hidden by default) -->
+          <div class="api-key-input hidden" id="gemini-key-container">
+            <input type="password" id="gemini-api-key" placeholder="Gemini API Key" />
+            <button class="small-btn" id="btn-save-key">Guardar</button>
+          </div>
+
+          <!-- Chat Messages -->
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-empty">
+              <p>💡 Pregunta algo sobre la conversación</p>
+              <p class="chat-hint">Ej: "¿Qué se habló del ticket NPC-420?"</p>
+            </div>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-container">
+            <input 
+              type="text" 
+              id="chat-input" 
+              placeholder="Escribe tu pregunta..."
+              autocomplete="off"
+            />
+            <button class="send-btn" id="btn-send">
+              ➤
+            </button>
+          </div>
+        </section>
+
+        <!-- Info Footer -->
+        <footer class="info-footer">
+          <p>
+            🚀 Procesamiento local con WebGPU • 🔒 Tu audio nunca sale del
+            navegador
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

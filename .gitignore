@@ -1,0 +1,25 @@
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environments & Secrets
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+jspm_packages/
+package-lock.json (optional, usually kept)
+
+# Build & Output
+dist/
+build/
+out/
+*.log
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
