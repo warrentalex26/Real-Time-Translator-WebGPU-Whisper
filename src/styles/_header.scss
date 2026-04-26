@@ -11,6 +11,14 @@
   padding: var(--spacing-md) 0;
 }
 
+// --- Header Controls ---
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
 // --- Logo ---
 
 .logo {
@@ -41,6 +49,11 @@
   50% {
     transform: scale(1.1);
   }
+}
+
+// --- Language Toggle ---
+.lang-toggle {
+    margin-right: var(--spacing-sm);
 }
 
 // --- Status Badge ---

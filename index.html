@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Traductor en tiempo real con WebGPU - Transcribe y traduce audio de videollamadas al español"
+      content="Real-time translator with WebGPU - Transcribes and translates audio to Spanish"
     />
     <meta name="theme-color" content="#1a1a2e" />
-    <title>Traductor en Tiempo Real | WebGPU Whisper</title>
+    <title data-i18n="title">Real-Time Translator | WebGPU Whisper</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -32,18 +32,24 @@
         <header class="header">
           <div class="logo">
             <span class="logo-icon">🎙️</span>
-            <h1>Traductor en Tiempo Real</h1>
+            <h1 data-i18n="title">Real-Time Translator</h1>
           </div>
-          <div class="status-badge" id="webgpu-status">
-            <span class="status-dot"></span>
-            <span class="status-text">Verificando WebGPU...</span>
+          <div class="header-controls">
+            <div class="ai-provider-toggle lang-toggle">
+              <button class="provider-btn active" id="lang-en">EN</button>
+              <button class="provider-btn" id="lang-es">ES</button>
+            </div>
+            <div class="status-badge" id="webgpu-status">
+              <span class="status-dot"></span>
+              <span class="status-text" data-i18n="verifying_webgpu">Verifying WebGPU...</span>
+            </div>
           </div>
         </header>
 
         <!-- Control Panel -->
         <section class="control-panel glass-card">
           <div class="source-selector">
-            <label class="selector-label">Fuente de Audio</label>
+            <label class="selector-label" data-i18n="audio_source">Audio Source</label>
             <div class="source-buttons">
               <button
                 class="source-btn active"
@@ -51,36 +57,36 @@
                 data-source="microphone"
               >
                 <span class="btn-icon">🎤</span>
-                <span class="btn-text">Micrófono</span>
+                <span class="btn-text" data-i18n="microphone">Microphone</span>
               </button>
               <button class="source-btn" id="btn-tab" data-source="tab">
                 <span class="btn-icon">🔊</span>
-                <span class="btn-text">Audio de Pestaña</span>
+                <span class="btn-text" data-i18n="tab_audio">Tab Audio</span>
               </button>
             </div>
           </div>
 
           <div class="model-selector">
-            <label class="selector-label">Modelo Whisper</label>
+            <label class="selector-label" data-i18n="whisper_model">Whisper Model</label>
             <div class="model-buttons">
               <button class="model-btn" data-model="tiny">
                 <span class="model-icon">⚡</span>
                 <span class="model-info">
-                  <span class="model-name">Rápido</span>
+                  <span class="model-name" data-i18n="fast">Fast</span>
                   <span class="model-size">~39MB</span>
                 </span>
               </button>
               <button class="model-btn active" data-model="base">
                 <span class="model-icon">⚖️</span>
                 <span class="model-info">
-                  <span class="model-name">Balanceado</span>
+                  <span class="model-name" data-i18n="balanced">Balanced</span>
                   <span class="model-size">~74MB</span>
                 </span>
               </button>
               <button class="model-btn" data-model="small">
                 <span class="model-icon">🎯</span>
                 <span class="model-info">
-                  <span class="model-name">Preciso</span>
+                  <span class="model-name" data-i18n="accurate">Accurate</span>
                   <span class="model-size">~244MB</span>
                 </span>
               </button>
@@ -91,7 +97,7 @@
             <button class="primary-btn" id="btn-start" disabled>
               <span class="btn-content">
                 <span class="play-icon">▶</span>
-                <span>Iniciar Traducción</span>
+                <span data-i18n="start_translation">Start Translation</span>
               </span>
             </button>
           </div>
@@ -99,14 +105,14 @@
           <!-- Model Loading Progress -->
           <div class="progress-container hidden" id="progress-container">
             <div class="progress-header">
-              <span class="progress-label">Cargando modelo Whisper...</span>
+              <span class="progress-label" data-i18n="loading_model">Loading Whisper model...</span>
               <span class="progress-percent" id="progress-percent">0%</span>
             </div>
             <div class="progress-bar">
               <div class="progress-fill" id="progress-fill"></div>
             </div>
-            <p class="progress-note">
-              Primera vez: ~200MB. Se guardará en caché.
+            <p class="progress-note" data-i18n="loading_note">
+              First time: ~200MB. Will be cached.
             </p>
           </div>
         </section>
@@ -114,14 +120,14 @@
         <!-- Subtitles Display -->
         <section class="subtitles-panel glass-card">
           <div class="subtitles-header">
-            <h2>📝 Subtítulos en Tiempo Real</h2>
+            <h2 data-i18n="subtitles_title">📝 Real-Time Subtitles</h2>
             <div class="header-actions">
-              <button class="icon-btn" id="btn-download" title="Descargar transcripción">
+              <button class="icon-btn" id="btn-download" title="Download transcript" data-i18n="download_tooltip">
                 💾
               </button>
               <div class="recording-indicator hidden" id="recording-indicator">
                 <span class="recording-dot"></span>
-                <span>Escuchando...</span>
+                <span data-i18n="listening">Listening...</span>
               </div>
             </div>
           </div>
@@ -129,9 +135,9 @@
           <div class="subtitles-container" id="subtitles-container">
             <div class="empty-state" id="empty-state">
               <div class="empty-icon">🎧</div>
-              <p>Los subtítulos aparecerán aquí</p>
-              <p class="empty-hint">
-                Selecciona una fuente de audio y presiona "Iniciar Traducción"
+              <p data-i18n="empty_subtitles">Subtitles will appear here</p>
+              <p class="empty-hint" data-i18n="empty_hint">
+                Select an audio source and click "Start Translation"
               </p>
             </div>
           </div>
@@ -140,7 +146,7 @@
         <!-- AI Chat Panel -->
         <section class="chat-panel glass-card">
           <div class="chat-header">
-            <h2>🤖 Pregunta sobre la reunión</h2>
+            <h2 data-i18n="chat_title">🤖 Ask about the meeting</h2>
             <div class="ai-provider-toggle">
               <button class="provider-btn active" id="btn-ollama" data-provider="ollama">
                 Ollama
@@ -154,14 +160,14 @@
           <!-- Gemini API Key Input (hidden by default) -->
           <div class="api-key-input hidden" id="gemini-key-container">
             <input type="password" id="gemini-api-key" placeholder="Gemini API Key" />
-            <button class="small-btn" id="btn-save-key">Guardar</button>
+            <button class="small-btn" id="btn-save-key" data-i18n="save">Save</button>
           </div>
 
           <!-- Chat Messages -->
           <div class="chat-messages" id="chat-messages">
             <div class="chat-empty">
-              <p>💡 Pregunta algo sobre la conversación</p>
-              <p class="chat-hint">Ej: "¿Qué se habló del ticket NPC-420?"</p>
+              <p data-i18n="chat_empty">💡 Ask something about the conversation</p>
+              <p class="chat-hint" data-i18n="chat_hint">Ex: "What did they say about the new feature?"</p>
             </div>
           </div>
 
@@ -170,7 +176,8 @@
             <input 
               type="text" 
               id="chat-input" 
-              placeholder="Escribe tu pregunta..."
+              placeholder="Type your question..."
+              data-i18n="chat_placeholder"
               autocomplete="off"
             />
             <button class="send-btn" id="btn-send">
@@ -181,9 +188,8 @@
 
         <!-- Info Footer -->
         <footer class="info-footer">
-          <p>
-            🚀 Procesamiento local con WebGPU • 🔒 Tu audio nunca sale del
-            navegador
+          <p data-i18n="footer_info">
+            🚀 Local processing with WebGPU • 🔒 Your audio never leaves the browser
           </p>
         </footer>
       </main>

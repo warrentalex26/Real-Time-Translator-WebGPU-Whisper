@@ -13,6 +13,7 @@ A **fully local, privacy-first** real-time audio translator that runs entirely i
 - **🤖 AI Meeting Assistant** — Ask questions about the transcript using Ollama (local) or Gemini API
 - **💾 Export Transcripts** — Download bilingual transcripts as text files
 - **⚡ Model Selector** — Choose between speed (tiny), balance (base), or accuracy (small)
+- **🌍 Bilingual UI** — Application interface available in both English and Spanish
 - **🔒 100% Private** — All audio processing happens locally in your browser
 
 ## 🏗️ Architecture

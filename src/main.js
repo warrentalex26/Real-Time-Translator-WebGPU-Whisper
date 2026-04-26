@@ -19,6 +19,7 @@ import {
   checkOllamaAvailable,
   getAIProvider,
 } from "./ai-chat.js";
+import { initI18n, t, getLanguage } from "./i18n.js";
 
 // DOM Elements - Main
 const webgpuStatus = document.getElementById("webgpu-status");
@@ -59,11 +60,23 @@ let isChatLoading = false;
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
+  initI18n();
   checkWebGPUSupport();
   setupEventListeners();
   await checkOllamaStatus();
   loadSavedApiKey();
   loadSavedModel();
+  
+  // Listen for language changes to update specific UI parts
+  document.addEventListener("languageChanged", updateDynamicUI);
+}
+
+function updateDynamicUI() {
+  // Update button text depending on recording state
+  const btnStartText = btnStart.querySelector(".btn-content span:last-child");
+  if (btnStartText) {
+    btnStartText.textContent = isRecording ? t("stop_translation") : t("start_translation");
+  }
 }
 
 /**
@@ -75,11 +88,11 @@ function checkWebGPUSupport() {
 
   if (hasWebGPU) {
     webgpuStatus.classList.add("ready");
-    statusText.textContent = "WebGPU disponible";
+    statusText.textContent = t("webgpu_ready");
     btnStart.disabled = false;
   } else {
     webgpuStatus.classList.remove("ready");
-    statusText.textContent = "WebGPU no disponible (usando WASM)";
+    statusText.textContent = t("webgpu_error");
     btnStart.disabled = false;
   }
 }
@@ -207,7 +220,7 @@ function saveGeminiApiKey() {
     localStorage.setItem("gemini_api_key", key);
     setGeminiApiKey(key);
     geminiApiKeyInput.value = "••••••••••••••••";
-    showChatMessage("API key guardada ✓", "assistant");
+    showChatMessage(getLanguage() === "es" ? "API key guardada ✓" : "API key saved ✓", "assistant");
   }
 }
 
@@ -216,7 +229,7 @@ function saveGeminiApiKey() {
  */
 function downloadTranscript() {
   if (transcriptManager.count === 0) {
-    showError("No hay transcripción para descargar");
+    showError(t("no_transcript_error"));
     return;
   }
   transcriptManager.downloadAsFile("bilingual");
@@ -276,7 +289,7 @@ async function startRecording() {
     btnStart.innerHTML = `
       <span class="btn-content">
         <span class="play-icon">⏹</span>
-        <span>Detener</span>
+        <span>${t("stop_translation")}</span>
       </span>
     `;
     btnStart.classList.add("recording");
@@ -314,7 +327,7 @@ function stopRecording() {
   btnStart.innerHTML = `
     <span class="btn-content">
       <span class="play-icon">▶</span>
-      <span>Iniciar Traducción</span>
+      <span>${t("start_translation")}</span>
     </span>
   `;
   btnStart.classList.remove("recording");
@@ -455,7 +468,7 @@ function addSubtitleEntry(original, translated) {
   const translationHtml =
     translated !== null
       ? escapeHtml(translated)
-      : '<span class="translating-indicator">Traduciendo<span class="loading-dots"></span></span>';
+      : `<span class="translating-indicator">${t("translating")}<span class="loading-dots"></span></span>`;
 
   entry.innerHTML = `
     <div class="subtitle-original">${escapeHtml(original)}</div>
@@ -513,7 +526,7 @@ async function sendChatMessage() {
   // Show loading state
   isChatLoading = true;
   btnSend.disabled = true;
-  const loadingMsg = showChatMessage("Pensando", "assistant loading");
+  const loadingMsg = showChatMessage(t("translating"), "assistant loading");
 
   try {
     // Get transcript context
