@@ -11,9 +11,10 @@ A **fully local, privacy-first** real-time audio translator that runs entirely i
 - **🎤 Dual Audio Sources** — Capture from microphone or browser tab audio
 - **📝 Real-Time Subtitles** — Bilingual subtitles (English + Spanish) with timestamps
 - **🤖 AI Meeting Assistant** — Ask questions about the transcript using Ollama (local) or Gemini API
-- **💾 Export Transcripts** — Download bilingual transcripts as text files
-- **⚡ Model Selector** — Choose between speed (tiny), balance (base), or accuracy (small)
-- **🌍 Bilingual UI** — Application interface available in both English and Spanish
+- **🪄 Detailed AI Summaries** — Generate comprehensive, well-formatted meeting summaries in a dedicated view
+- **💾 Export Transcripts & Summaries** — Download bilingual transcripts and AI summaries as TXT or Word documents
+- **⚡ Hardware Optimized** — Leverages large context windows (up to 32k) for local Ollama on Apple Silicon (M4 Pro/High-RAM systems)
+- **🌍 Bilingual UI** — Application interface available in both English and Spanish with a modern Glassmorphism design
 - **🔒 100% Private** — All audio processing happens locally in your browser
 
 ## 🏗️ Architecture
@@ -69,6 +70,7 @@ The app will be available at `http://localhost:5173`.
 4. **Speak in English** — Real-time bilingual subtitles will appear (English original + Spanish translation)
 5. **Ask the AI** — Use the chat panel to ask questions about the conversation (requires Ollama or Gemini API key)
 6. **Download transcript** — Click the 💾 button to export a bilingual transcript
+7. **Generate AI Summary** — Click the 🪄 (Magic Wand) button to analyze the entire meeting and generate a detailed summary in a new tab
 
 ### AI Chat Setup
 
@@ -106,6 +108,39 @@ Output will be in the `dist/` directory.
 - **No data leaves your browser** — All speech recognition and translation runs locally via WebGPU/WASM
 - **No hardcoded API keys** — Gemini API key is entered by the user at runtime and stored only in `localStorage`
 - **No telemetry or tracking** — Zero external requests (except model downloads from Hugging Face on first use, and Gemini API calls if the user explicitly configures it)
+
+## 🤖 AI Agent Skills
+
+This project uses the [`npx skills`](https://skills.sh) system to enforce consistent coding and documentation standards across AI agent interactions. Skills are project-local — they only apply to this repository.
+
+### Installed Skills
+
+| Skill | When It Applies |
+|---|---|
+| `english-html-i18n` | Any time HTML or JS-generated UI is written or modified |
+| `update-documentation` | After significant features or architecture changes |
+| `frontend-design` | Building or redesigning UI components and pages |
+| `accessibility` | Auditing or improving a11y (WCAG 2.2) |
+| `modern-javascript-patterns` | Refactoring or writing new JS modules |
+| `seo` | Updating meta tags, page titles, or structured data |
+| `vite` | Modifying `vite.config.js` or build configuration |
+| `nodejs-backend-patterns` | Adding any Node.js server-side logic |
+| `nodejs-best-practices` | Architecture or framework decisions |
+
+### How to Use
+
+```bash
+# Add a new skill to this project
+npx skills add <github-source> --skill <skill-name>
+
+# Update all installed skills to their latest versions
+npx skills update
+
+# List available skills from a source
+npx skills list <github-source>
+```
+
+> Skills are stored in `.agents/skills/` and versioned via `skills-lock.json`. Any AI agent working on this project should read the relevant skill files before making changes.
 
 ## 📄 License
 
