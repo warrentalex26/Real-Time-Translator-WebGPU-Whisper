@@ -17,9 +17,27 @@
   padding-bottom: var(--spacing-md);
   border-bottom: 1px solid var(--glass-border);
 
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
+  .title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    
+    .title-icon {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+    
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .subtitle-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
   }
 }
 
@@ -92,42 +110,63 @@
 }
 
 .subtitle-entry {
+  position: relative;
+  background: rgba(40, 40, 60, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: 4px;
   padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--accent-primary);
+  margin-bottom: var(--spacing-md);
   animation: fadeInUp 0.3s ease;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 20px;
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: rgba(40, 40, 60, 0.6) transparent transparent transparent;
+    display: block;
+    width: 0;
+  }
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.bubble-content {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: var(--spacing-md);
 }
 
-.subtitle-original {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-sm);
+.subtitle-divider {
+  background: rgba(255, 255, 255, 0.1);
+  width: 1px;
+}
+
+.subtitle-col {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-  &::before { content: "\1F1FA\1F1F8"; flex-shrink: 0; }
-}
-
-.subtitle-translated {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-  &::before { content: "\1F1EA\1F1F8"; flex-shrink: 0; }
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  
+  .label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  
+  .text {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin: 0;
+  }
 }
 
 .subtitle-timestamp {
-  font-size: 0.75rem;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 0.7rem;
   color: var(--text-muted);
-  margin-top: var(--spacing-xs);
 }
 
 .translating-indicator {

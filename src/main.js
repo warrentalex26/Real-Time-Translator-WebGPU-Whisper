@@ -471,8 +471,17 @@ function addSubtitleEntry(original, translated) {
       : `<span class="translating-indicator">${t("translating")}<span class="loading-dots"></span></span>`;
 
   entry.innerHTML = `
-    <div class="subtitle-original">${escapeHtml(original)}</div>
-    <div class="subtitle-translated" data-translation-target>${translationHtml}</div>
+    <div class="bubble-content">
+      <div class="subtitle-col">
+        <span class="label">Original:</span>
+        <p class="text">${escapeHtml(original)}</p>
+      </div>
+      <div class="subtitle-divider"></div>
+      <div class="subtitle-col">
+        <span class="label">Traducción:</span>
+        <p class="text" data-translation-target>${translationHtml}</p>
+      </div>
+    </div>
     <div class="subtitle-timestamp">${relativeTime}</div>
   `;
 

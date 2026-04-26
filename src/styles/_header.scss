@@ -3,12 +3,15 @@
 // ============================================
 
 .header {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--spacing-md);
   padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: var(--spacing-lg);
 }
 
 // --- Header Controls ---
@@ -27,33 +30,39 @@
   gap: var(--spacing-md);
 
   h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .version {
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: var(--spacing-sm);
   }
 }
 
-.logo-icon {
-  font-size: 2.5rem;
-  animation: pulse 2s infinite ease-in-out;
-}
+// --- Language Display ---
+.lang-display {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-right: var(--spacing-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  
+  .lang-text {
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    
+    &:hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
 
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
+    &.active {
+      color: var(--text-primary);
+    }
   }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-// --- Language Toggle ---
-.lang-toggle {
-    margin-right: var(--spacing-sm);
 }
 
 // --- Status Badge ---

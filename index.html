@@ -28,26 +28,27 @@
 
       <!-- Main Container -->
       <main class="container">
-        <!-- Header -->
         <header class="header">
           <div class="logo">
-            <span class="logo-icon">🎙️</span>
-            <h1 data-i18n="title">Real-Time Translator</h1>
+            <h1>TraductorWebGPU <span class="version">Dashboard V1</span></h1>
           </div>
           <div class="header-controls">
-            <div class="ai-provider-toggle lang-toggle">
-              <button class="provider-btn active" id="lang-en">EN</button>
-              <button class="provider-btn" id="lang-es">ES</button>
+            <div class="lang-display">
+              <span class="lang-text active" id="lang-en">[EN]</span>
+              <span class="lang-text" id="lang-es">[ES]</span>
             </div>
-            <div class="status-badge" id="webgpu-status">
+            <div class="status-badge ready" id="webgpu-status">
               <span class="status-dot"></span>
-              <span class="status-text" data-i18n="verifying_webgpu">Verifying WebGPU...</span>
+              <span class="status-text" data-i18n="verifying_webgpu">WebGPU Active</span>
             </div>
           </div>
         </header>
 
         <!-- Control Panel -->
         <section class="control-panel glass-card">
+          <div class="panel-header">
+            <h2>Control Center</h2>
+          </div>
           <div class="source-selector">
             <label class="selector-label" data-i18n="audio_source">Audio Source</label>
             <div class="source-buttons">
@@ -120,7 +121,13 @@
         <!-- Subtitles Display -->
         <section class="subtitles-panel glass-card">
           <div class="subtitles-header">
-            <h2 data-i18n="subtitles_title">📝 Real-Time Subtitles</h2>
+            <div class="title-with-icon">
+              <span class="title-icon">📄</span>
+              <div>
+                <h2>Live Transcript</h2>
+                <p class="subtitle-label">Subtítulos en Tiempo Real</p>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="icon-btn" id="btn-download" title="Download transcript" data-i18n="download_tooltip">
                 💾
