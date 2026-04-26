@@ -19,7 +19,7 @@ A **fully local, privacy-first** real-time audio translator that runs entirely i
 ## 🏗️ Architecture
 
 ```
-Audio Input → AudioProcessor (3s chunks) → Whisper Worker (WebGPU) → Translation (OPUS-MT) → UI
+Audio Input → AudioProcessor (4s chunks) → Whisper Worker (WebGPU) → Translation (OPUS-MT) → UI
                                                                                     ↓
                                                                           AI Chat (Ollama/Gemini)
 ```

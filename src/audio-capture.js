@@ -4,7 +4,7 @@
  */
 
 const SAMPLE_RATE = 16000; // Whisper requires 16kHz audio
-const CHUNK_DURATION = 3; // Process audio in 3-second chunks for lower latency
+const CHUNK_DURATION = 4; // Process audio in 4-second chunks for lower latency
 
 /**
  * Get microphone audio stream
