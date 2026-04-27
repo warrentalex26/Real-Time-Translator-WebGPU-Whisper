@@ -18,6 +18,8 @@ import {
   setGeminiApiKey,
   checkOllamaAvailable,
   getAIProvider,
+  compressTranscriptBlock,
+  generateAutoInsight,
 } from "./ai-chat.js";
 import { initI18n, t, getLanguage } from "./i18n.js";
 import { Header } from "./components/Header.js";
@@ -56,6 +58,10 @@ const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const btnSend = document.getElementById("btn-send");
 
+// DOM Elements - Auto-Insights
+const autoInsightToggle = document.getElementById("auto-insight-toggle");
+const autoInsightInterval = document.getElementById("auto-insight-interval");
+
 // State
 let audioSource = "microphone";
 let selectedModel = "base"; // default model
@@ -64,6 +70,9 @@ let whisperWorker = null;
 let audioProcessor = null;
 let modelsReady = false;
 let isChatLoading = false;
+let autoInsightTimer = null;
+let autoInsightEnabled = true;
+let autoInsightIntervalMs = 60000; // 1 min default
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", init);
@@ -75,6 +84,7 @@ async function init() {
   await checkOllamaStatus();
   loadSavedApiKey();
   loadSavedModel();
+  loadAutoInsightPrefs();
   
   // Listen for language changes to update specific UI parts
   document.addEventListener("languageChanged", updateDynamicUI);
@@ -177,6 +187,31 @@ function setupEventListeners() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendChatMessage();
+    }
+  });
+
+  // Auto-Insight controls
+  autoInsightToggle.addEventListener("change", (e) => {
+    autoInsightEnabled = e.target.checked;
+    localStorage.setItem("auto_insight_enabled", autoInsightEnabled);
+    
+    if (isRecording) {
+      if (autoInsightEnabled) {
+        startAutoInsightTimer();
+      } else {
+        stopAutoInsightTimer();
+      }
+    }
+  });
+
+  autoInsightInterval.addEventListener("change", (e) => {
+    autoInsightIntervalMs = parseInt(e.target.value, 10);
+    localStorage.setItem("auto_insight_interval", autoInsightIntervalMs);
+    
+    // Restart timer with new interval if recording
+    if (isRecording && autoInsightEnabled) {
+      stopAutoInsightTimer();
+      startAutoInsightTimer();
     }
   });
 }
@@ -325,6 +360,11 @@ async function startRecording() {
     btnStart.disabled = false;
     recordingIndicator.classList.remove("hidden");
     emptyState.classList.add("hidden");
+
+    // Start auto-insight timer
+    if (autoInsightEnabled) {
+      startAutoInsightTimer();
+    }
   } catch (error) {
     console.error("Error starting recording:", error);
     showError(error.message);
@@ -348,6 +388,9 @@ function stopRecording() {
   if (whisperWorker) {
     whisperWorker.postMessage({ type: "stop" });
   }
+
+  // Stop auto-insight timer
+  stopAutoInsightTimer();
 
   // Re-enable model selector
   modelButtons.forEach((btn) => (btn.disabled = false));
@@ -482,6 +525,9 @@ function handleTranscription(text) {
       console.error("Translation error:", error);
       updateSubtitleTranslation(entryElement, `[Error] ${cleanText}`);
     });
+
+  // Check if we need to compress old transcript entries
+  maybeCompressTranscript();
 }
 
 /**
@@ -567,8 +613,8 @@ async function sendChatMessage() {
   const loadingMsg = showChatMessage(t("translating"), "assistant loading");
 
   try {
-    // Get transcript context
-    const context = transcriptManager.getAIContext();
+    // Get smart transcript context (compressed summaries + recent entries)
+    const context = transcriptManager.getSmartAIContext();
 
     // Ask AI
     const response = await askAboutTranscript(question, context);
@@ -584,6 +630,123 @@ async function sendChatMessage() {
   } finally {
     isChatLoading = false;
     btnSend.disabled = false;
+  }
+}
+
+// ============================================
+// Auto-Insight Functions
+// ============================================
+
+/**
+ * Start the auto-insight periodic timer
+ */
+function startAutoInsightTimer() {
+  stopAutoInsightTimer(); // Clear any existing timer
+  console.log(`Auto-insights started: every ${autoInsightIntervalMs / 1000}s`);
+  autoInsightTimer = setInterval(triggerAutoInsight, autoInsightIntervalMs);
+}
+
+/**
+ * Stop the auto-insight timer
+ */
+function stopAutoInsightTimer() {
+  if (autoInsightTimer) {
+    clearInterval(autoInsightTimer);
+    autoInsightTimer = null;
+  }
+}
+
+/**
+ * Trigger an auto-insight generation
+ */
+async function triggerAutoInsight() {
+  if (!isRecording || isChatLoading) return;
+  
+  const recentContext = transcriptManager.getRecentContext(15);
+  if (!recentContext || recentContext.trim().length === 0) return;
+
+  try {
+    const insight = await generateAutoInsight(recentContext);
+    if (insight && insight.trim().length > 0) {
+      showAutoInsightMessage(insight.trim());
+    }
+  } catch (error) {
+    console.error("Auto-insight failed:", error);
+  }
+}
+
+/**
+ * Show an auto-insight message in the chat with special styling
+ */
+function showAutoInsightMessage(text) {
+  // Clear empty state if present
+  const chatEmpty = chatMessages.querySelector(".chat-empty");
+  if (chatEmpty) {
+    chatEmpty.remove();
+  }
+
+  const msg = document.createElement("div");
+  msg.className = "chat-message auto-insight";
+  msg.innerHTML = `
+    <span class="auto-insight-badge">${t("auto_insight_badge")}</span>
+    <span class="auto-insight-text">${escapeHtml(text)}</span>
+  `;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return msg;
+}
+
+// ============================================
+// Transcript Compression
+// ============================================
+
+/**
+ * Check and trigger transcript compression if needed
+ */
+async function maybeCompressTranscript() {
+  if (!transcriptManager.needsCompression()) return;
+
+  const entriesToCompress = transcriptManager.getUncompressedEntries();
+  if (entriesToCompress.length === 0) return;
+
+  const fromIndex = transcriptManager.lastCompressedIndex;
+  const toIndex = fromIndex + entriesToCompress.length;
+
+  transcriptManager.startCompression();
+  console.log(`Compressing entries ${fromIndex}-${toIndex}...`);
+
+  try {
+    const summary = await compressTranscriptBlock(entriesToCompress);
+    if (summary && summary.trim().length > 0) {
+      transcriptManager.addCompressedSummary(summary.trim(), fromIndex, toIndex);
+    } else {
+      // Compression returned empty — release the lock
+      transcriptManager._compressionInProgress = false;
+    }
+  } catch (error) {
+    console.error("Transcript compression failed:", error);
+    transcriptManager._compressionInProgress = false;
+  }
+}
+
+// ============================================
+// Auto-Insight Preferences
+// ============================================
+
+/**
+ * Load saved auto-insight preferences from localStorage
+ */
+function loadAutoInsightPrefs() {
+  const savedEnabled = localStorage.getItem("auto_insight_enabled");
+  if (savedEnabled !== null) {
+    autoInsightEnabled = savedEnabled === "true";
+    autoInsightToggle.checked = autoInsightEnabled;
+  }
+
+  const savedInterval = localStorage.getItem("auto_insight_interval");
+  if (savedInterval) {
+    autoInsightIntervalMs = parseInt(savedInterval, 10);
+    autoInsightInterval.value = String(autoInsightIntervalMs);
   }
 }
 

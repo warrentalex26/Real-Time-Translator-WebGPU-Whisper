@@ -41,7 +41,12 @@ export const translations = {
     "error_title": "An error occurred",
     "error_default": "Could not generate summary.",
     "retry": "Retry",
-    "missing_transcript_error": "The meeting transcript could not be found. Please return to the homepage and generate the summary again."
+    "missing_transcript_error": "The meeting transcript could not be found. Please return to the homepage and generate the summary again.",
+    "auto_insight_label": "Auto-Insights",
+    "auto_insight_badge": "⚡ Auto-Insight",
+    "auto_insight_generating": "Generating insight...",
+    "auto_insight_enabled": "Auto-Insights enabled",
+    "auto_insight_disabled": "Auto-Insights disabled"
   },
   es: {
     "title": "Traductor en Tiempo Real",
@@ -85,7 +90,12 @@ export const translations = {
     "error_title": "Ocurrió un error",
     "error_default": "No se pudo generar el resumen.",
     "retry": "Reintentar",
-    "missing_transcript_error": "No se encontró la transcripción de la reunión. Por favor, vuelve a la página principal y genera el resumen nuevamente."
+    "missing_transcript_error": "No se encontró la transcripción de la reunión. Por favor, vuelve a la página principal y genera el resumen nuevamente.",
+    "auto_insight_label": "Auto-Insights",
+    "auto_insight_badge": "⚡ Auto-Insight",
+    "auto_insight_generating": "Generando insight...",
+    "auto_insight_enabled": "Auto-Insights activados",
+    "auto_insight_disabled": "Auto-Insights desactivados"
   }
 };
 

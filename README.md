@@ -12,6 +12,8 @@ A **fully local, privacy-first** real-time audio translator that runs entirely i
 - **📝 Real-Time Subtitles** — Bilingual subtitles (English + Spanish) with timestamps
 - **🤖 AI Meeting Assistant** — Ask questions about the transcript using Ollama (local) or Gemini API
 - **🪄 Detailed AI Summaries** — Generate comprehensive, well-formatted meeting summaries in a dedicated view
+- **⚡ Auto-Insights** — Automatic periodic summaries of the current discussion topic (configurable 1–10 min intervals)
+- **🧠 Smart Context** — Incremental transcript compression ensures AI queries work reliably even in multi-hour meetings
 - **💾 Export Transcripts & Summaries** — Download bilingual transcripts and AI summaries as TXT or Word documents
 - **⚡ Hardware Optimized** — Leverages large context windows (up to 32k) for local Ollama on Apple Silicon (M4 Pro/High-RAM systems)
 - **🌍 Bilingual UI** — Application interface available in both English and Spanish with a modern Glassmorphism design

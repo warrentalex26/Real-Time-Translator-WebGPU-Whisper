@@ -30,7 +30,7 @@ The application follows an asynchronous, event-driven architecture, separating a
 3. **Transcription:** Chunks are sent to a Web Worker running the Whisper model. The worker transcribes the audio to English text.
 4. **Translation:** The English text is sent back to the main thread, displayed immediately (with a loading indicator for translation), and sent to the OPUS-MT model for Spanish translation.
 5. **State & Display:** The `TranscriptManager` stores the bilingual entries. The UI updates dynamically.
-6. **AI Features:** The user can ask questions in the chat panel, or trigger a "Detailed AI Summary" (🪄). The full transcript context is sent to Ollama (configured for 32k context on high-RAM systems like M4 Pro) or Gemini to generate responses or summaries in a new dedicated page (`pages/summary.html`).
+6. **AI Features:** The user can ask questions in the chat panel, or trigger a "Detailed AI Summary" (🪄). A **Smart Context** system compresses older transcript blocks into summaries so that AI queries always fit within context limits, even for multi-hour meetings. **Auto-Insights** periodically generate automatic summaries of the current discussion topic at configurable intervals (1–10 min).
 
 ## 4. Module Breakdown
 
@@ -43,8 +43,8 @@ The application follows an asynchronous, event-driven architecture, separating a
   - Runs asynchronously to prevent blocking the main UI thread.
   - Receives audio chunks, processes them, and posts transcribed text strings back to `main.js`.
 - **`translation.js`**: Runs the OPUS-MT (`Xenova/opus-mt-en-es`) model on the main thread. Includes a basic caching mechanism (`translationCache`) to avoid re-translating identical strings.
-- **`transcript-manager.js`**: A state manager (`TranscriptManager` class) that holds the history of transcriptions. Handles formatting timestamps and exporting the transcript to a downloadable text file (Original or Bilingual).
-- **`ai-chat.js`**: Manages interactions with AI providers. Formats prompts with the current transcript context to ask questions or generate detailed summaries using either a local Ollama instance (with extended context size) or the Gemini API.
+- **`transcript-manager.js`**: A state manager (`TranscriptManager` class) that holds the history of transcriptions. Handles formatting timestamps and exporting the transcript to a downloadable text file (Original or Bilingual). Implements **incremental compression**: after every 30 new entries, older transcript blocks are summarized by the AI and stored as compressed summaries. `getSmartAIContext()` returns these summaries plus the last 40 detailed entries, keeping the AI context always within token limits.
+- **`ai-chat.js`**: Manages interactions with AI providers. Includes `askAboutTranscript()` for user questions, `compressTranscriptBlock()` for incremental transcript compression, `generateAutoInsight()` for periodic automatic insights, and `generateSummary()` for detailed meeting summaries. Works with both local Ollama and remote Gemini API.
 - **`i18n.js`**: Handles localization for the UI elements (English/Spanish interface support).
 - **`summary.js`**: Drives the logic for the dedicated AI Summary page (`pages/summary.html`), including markdown parsing, regeneration, and exporting to TXT/Word formats.
 
@@ -59,6 +59,8 @@ The application follows an asynchronous, event-driven architecture, separating a
 - **Immediate Feedback UI:** When transcription finishes, the English text is rendered immediately, while the Spanish translation shows a loading state. This ensures the user feels the system is responsive.
 - **Hardware-Aware AI Context:** The local Ollama implementation is configured to use a massive 32,768 context window (`num_ctx`). This allows users with high-RAM systems (like Apple Silicon M4 Pro with 24GB+ RAM) to process transcripts of entire long meetings without truncating context.
 - **Vanilla JS Components:** To avoid the overhead of a large framework while still scaling the UI to multiple pages (like the summary page), the project uses dynamic DOM injection (`document.getElementById().innerHTML`) to share components like the Header and Footer.
+- **Smart Context Compression:** For long meetings (30+ min), the full transcript can exceed the AI's context window. The system automatically compresses older blocks of 30 entries into short AI-generated summaries (~200 tokens each). When querying the AI, the context sent is always: `[compressed summaries] + [last 40 detailed entries]`, keeping it bounded while preserving full meeting history.
+- **Auto-Insights:** A configurable periodic timer (1–10 min intervals) generates automatic descriptions of what's currently being discussed, using only the last 15 transcript entries for fast, lightweight AI calls.
 
 ## 6. Development & Run Instructions
 
@@ -70,21 +72,32 @@ The application follows an asynchronous, event-driven architecture, separating a
 
 ## 7. AI Agent Skills (MANDATORY)
 
-> **⚠️ Any AI agent working on this project MUST check `.agents/skills/` at the start of each task and follow the relevant skill instructions before making changes.**
+> **⚠️ Any AI agent working on this project MUST follow the skill workflow below. Failure to do so will result in incorrect or incomplete work.**
 
 This project uses the [`npx skills`](https://skills.sh) system to manage project-local AI agent instructions. Skills are stored in `.agents/skills/` and tracked via `skills-lock.json` (similar to `package-lock.json`).
 
+### Mandatory Workflow
+
+Every task that modifies code MUST follow this sequence:
+
+#### 🔵 BEFORE making any code changes:
+1. **Read `.agents/skills/english-html-i18n/SKILL.md`** — Ensure all HTML/JS-generated text is in English by default with `data-i18n` attributes. Register every new key in `src/i18n.js` with both `en` and `es` translations.
+2. **Read any other relevant skill** for the task at hand (e.g., `frontend-design` for UI work, `vite` for build config, etc.).
+
+#### 🟢 AFTER completing all code changes:
+1. **Read `.agents/skills/update-documentation/SKILL.md`** — Evaluate if the changes warrant updates to `README.md` and/or `PROJECT_ARCHITECTURE.md`. Update if the change is a significant feature or architectural shift; skip for minor bug fixes or tweaks.
+
 ### Installed Skills
 
-| Skill | Purpose |
-|---|---|
-| `english-html-i18n` | All HTML text must be in English by default; every visible string requires a `data-i18n` key registered in `src/i18n.js` with both `en` and `es` translations |
-| `update-documentation` | After significant changes, verify and update `README.md` and `PROJECT_ARCHITECTURE.md`; skip for minor bug fixes |
-| `accessibility` | WCAG 2.2 audit and improvements |
-| `frontend-design` | Production-grade UI component standards |
-| `modern-javascript-patterns` | ES6+ patterns, async/await, functional programming |
-| `nodejs-backend-patterns` | Node.js service and API best practices |
-| `nodejs-best-practices` | Framework selection, security, architecture decisions |
-| `seo` | Meta tags, structured data, search optimization |
-| `vite` | Vite config, plugins, and build optimization |
+| Skill | When to Apply | Phase |
+|---|---|---|
+| `english-html-i18n` | Any time HTML or JS-generated UI is written or modified | **BEFORE** |
+| `update-documentation` | After significant features or architecture changes | **AFTER** |
+| `accessibility` | Auditing or improving a11y (WCAG 2.2) | Before |
+| `frontend-design` | Building or redesigning UI components and pages | Before |
+| `modern-javascript-patterns` | Refactoring or writing new JS modules | Before |
+| `nodejs-backend-patterns` | Adding any Node.js server-side logic | Before |
+| `nodejs-best-practices` | Architecture or framework decisions | Before |
+| `seo` | Updating meta tags, page titles, or structured data | Before |
+| `vite` | Modifying `vite.config.js` or build configuration | Before |
 

@@ -95,10 +95,17 @@ export async function getOllamaModels() {
  * @returns {string}
  */
 function buildSystemPrompt(transcriptContext) {
-  return `You are a helpful assistant analyzing a meeting transcript. 
+  return `You are a helpful assistant analyzing a meeting transcript.
 Your role is to answer questions about what was discussed in the meeting.
 Be concise and specific. Reference timestamps when relevant.
 If the information isn't in the transcript, say so clearly.
+
+The context below may contain two sections:
+1. "RESUMEN DE LO DISCUTIDO ANTERIORMENTE" — compressed summaries of earlier parts of the meeting
+2. "TRANSCRIPCIÓN RECIENTE (DETALLADA)" — the most recent detailed transcript with timestamps
+
+When the user asks about "what they are talking about NOW" or "right now", focus on the RECENT section.
+When the user asks about earlier topics, use the SUMMARIES section.
 
 MEETING TRANSCRIPT:
 ${transcriptContext}
@@ -221,6 +228,137 @@ export async function askAboutTranscript(question, transcriptContext) {
     }
 
     return `Error: ${error.message}`;
+  }
+}
+
+/**
+ * Compress a block of transcript entries into a short summary
+ * @param {Array} entries - Array of {relativeTime, original} entries
+ * @returns {Promise<string>} - Compressed summary (3-5 sentences)
+ */
+export async function compressTranscriptBlock(entries) {
+  if (!entries || entries.length === 0) {
+    return "";
+  }
+
+  const blockText = entries
+    .map((e) => `[${e.relativeTime}] ${e.original}`)
+    .join("\n");
+
+  const compressionPrompt = `You are summarizing a segment of a meeting transcript.
+Condense the following transcript segment into 3-5 concise sentences in Spanish.
+Capture the KEY topics discussed, any decisions made, and important details.
+Do NOT include timestamps in your summary. Be factual and concise.
+
+TRANSCRIPT SEGMENT:
+${blockText}
+
+SUMMARY (in Spanish, 3-5 sentences):`;
+
+  try {
+    if (AI_CONFIG.provider === "ollama") {
+      const response = await fetch(`${AI_CONFIG.ollama.baseUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_CONFIG.ollama.model,
+          messages: [
+            { role: "system", content: compressionPrompt },
+            { role: "user", content: "Genera el resumen conciso del segmento." },
+          ],
+          stream: false,
+          options: { num_ctx: 8192 },
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
+      const data = await response.json();
+      return data.message?.content || "";
+    } else {
+      if (!AI_CONFIG.gemini.apiKey) return "";
+
+      const response = await fetch(
+        `${AI_CONFIG.gemini.baseUrl}/models/${AI_CONFIG.gemini.model}:generateContent?key=${AI_CONFIG.gemini.apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: compressionPrompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 512 },
+          }),
+        }
+      );
+
+      if (!response.ok) return "";
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    }
+  } catch (error) {
+    console.error("Compression error:", error);
+    return "";
+  }
+}
+
+/**
+ * Generate an automatic insight about what's being discussed right now
+ * @param {string} recentContext - Recent transcript entries
+ * @returns {Promise<string>} - Short insight (2-3 sentences)
+ */
+export async function generateAutoInsight(recentContext) {
+  if (!recentContext || recentContext.trim().length === 0) {
+    return "";
+  }
+
+  const insightPrompt = `Based on the following recent meeting transcript, describe in 2-3 sentences what they are discussing RIGHT NOW.
+Be specific and concise. Mention the current topic and any key points.
+Respond in Spanish.
+
+RECENT TRANSCRIPT:
+${recentContext}
+
+CURRENT TOPIC (2-3 sentences in Spanish):`;
+
+  try {
+    if (AI_CONFIG.provider === "ollama") {
+      const response = await fetch(`${AI_CONFIG.ollama.baseUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_CONFIG.ollama.model,
+          messages: [
+            { role: "system", content: insightPrompt },
+            { role: "user", content: "¿De qué están hablando ahora mismo?" },
+          ],
+          stream: false,
+          options: { num_ctx: 4096 },
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
+      const data = await response.json();
+      return data.message?.content || "";
+    } else {
+      if (!AI_CONFIG.gemini.apiKey) return "";
+
+      const response = await fetch(
+        `${AI_CONFIG.gemini.baseUrl}/models/${AI_CONFIG.gemini.model}:generateContent?key=${AI_CONFIG.gemini.apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: insightPrompt }] }],
+            generationConfig: { temperature: 0.5, maxOutputTokens: 256 },
+          }),
+        }
+      );
+
+      if (!response.ok) return "";
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    }
+  } catch (error) {
+    console.error("Auto-insight error:", error);
+    return "";
   }
 }
 

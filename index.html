@@ -144,13 +144,29 @@
         <section class="chat-panel glass-card">
           <div class="chat-header">
             <h2 data-i18n="chat_title">🤖 Ask about the meeting</h2>
-            <div class="ai-provider-toggle">
-              <button class="provider-btn active" id="btn-ollama" data-provider="ollama">
-                Ollama
-              </button>
-              <button class="provider-btn" id="btn-gemini" data-provider="gemini">
-                Gemini
-              </button>
+            <div class="chat-header-controls">
+              <div class="ai-provider-toggle">
+                <button class="provider-btn active" id="btn-ollama" data-provider="ollama">
+                  Ollama
+                </button>
+                <button class="provider-btn" id="btn-gemini" data-provider="gemini">
+                  Gemini
+                </button>
+              </div>
+              <div class="auto-insight-controls">
+                <label class="toggle-switch" title="Auto-Insights" data-i18n="auto_insight_label">
+                  <input type="checkbox" id="auto-insight-toggle" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="auto-insight-label" data-i18n="auto_insight_label">Auto-Insights</span>
+                <select id="auto-insight-interval" class="interval-select">
+                  <option value="60000" selected>1 min</option>
+                  <option value="120000">2 min</option>
+                  <option value="180000">3 min</option>
+                  <option value="300000">5 min</option>
+                  <option value="600000">10 min</option>
+                </select>
+              </div>
             </div>
           </div>
 

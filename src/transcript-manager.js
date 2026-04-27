@@ -1,12 +1,20 @@
 /**
  * Transcript Manager
  * Handles storing and exporting transcription data
+ * Supports incremental compression for long meetings
  */
+
+// Compression thresholds
+const COMPRESS_THRESHOLD = 30; // Compress every 30 new uncompressed entries
+const RECENT_WINDOW = 40; // Keep last 40 entries in detail for AI context
 
 class TranscriptManager {
   constructor() {
     this.entries = [];
     this.sessionStartTime = null;
+    this.compressedSummaries = []; // Array of { summary, fromIndex, toIndex, timestamp }
+    this.lastCompressedIndex = 0; // Index up to which entries have been compressed
+    this._compressionInProgress = false;
   }
 
   /**
@@ -15,6 +23,9 @@ class TranscriptManager {
   startSession() {
     this.entries = [];
     this.sessionStartTime = new Date();
+    this.compressedSummaries = [];
+    this.lastCompressedIndex = 0;
+    this._compressionInProgress = false;
   }
 
   /**
@@ -97,15 +108,101 @@ class TranscriptManager {
   }
 
   /**
-   * Get transcript formatted for AI context (concise)
+   * Get transcript formatted for AI context with smart compression
+   * Returns compressed summaries + recent detailed entries
+   * @returns {string}
+   */
+  getSmartAIContext() {
+    if (this.entries.length === 0) return "No transcript available yet.";
+
+    const parts = [];
+
+    // Add compressed summaries as historical context
+    if (this.compressedSummaries.length > 0) {
+      parts.push("=== RESUMEN DE LO DISCUTIDO ANTERIORMENTE ===");
+      this.compressedSummaries.forEach((block, i) => {
+        parts.push(`[Bloque ${i + 1}] ${block.summary}`);
+      });
+      parts.push("=== FIN DEL RESUMEN ===\n");
+    }
+
+    // Add recent detailed entries
+    const recentEntries = this.entries.slice(-RECENT_WINDOW);
+    parts.push("=== TRANSCRIPCIÓN RECIENTE (DETALLADA) ===");
+    recentEntries.forEach((entry) => {
+      parts.push(`[${entry.relativeTime}] ${entry.original}`);
+    });
+
+    return parts.join("\n");
+  }
+
+  /**
+   * Get original AI context (for backward compatibility)
    * @returns {string}
    */
   getAIContext() {
-    if (this.entries.length === 0) return "No transcript available yet.";
+    return this.getSmartAIContext();
+  }
 
-    return this.entries
+  /**
+   * Get only the most recent entries for lightweight operations (auto-insights)
+   * @param {number} count - Number of recent entries to return
+   * @returns {string}
+   */
+  getRecentContext(count = 15) {
+    if (this.entries.length === 0) return "";
+    const recent = this.entries.slice(-count);
+    return recent
       .map((entry) => `[${entry.relativeTime}] ${entry.original}`)
       .join("\n");
+  }
+
+  /**
+   * Check if there are enough uncompressed entries to trigger compression
+   * @returns {boolean}
+   */
+  needsCompression() {
+    if (this._compressionInProgress) return false;
+    const uncompressedCount = this.entries.length - this.lastCompressedIndex;
+    return uncompressedCount >= COMPRESS_THRESHOLD + RECENT_WINDOW;
+  }
+
+  /**
+   * Get the entries that need to be compressed
+   * @returns {Array}
+   */
+  getUncompressedEntries() {
+    // Leave RECENT_WINDOW entries uncompressed (they go as detailed context)
+    const endIndex = this.entries.length - RECENT_WINDOW;
+    if (endIndex <= this.lastCompressedIndex) return [];
+    return this.entries.slice(this.lastCompressedIndex, endIndex);
+  }
+
+  /**
+   * Store a compressed summary for a block of entries
+   * @param {string} summary - The AI-generated summary
+   * @param {number} fromIndex - Start index of compressed entries
+   * @param {number} toIndex - End index of compressed entries
+   */
+  addCompressedSummary(summary, fromIndex, toIndex) {
+    this.compressedSummaries.push({
+      summary,
+      fromIndex,
+      toIndex,
+      timestamp: new Date(),
+    });
+    this.lastCompressedIndex = toIndex;
+    this._compressionInProgress = false;
+    console.log(
+      `Compressed entries ${fromIndex}-${toIndex} into summary (${this.compressedSummaries.length} blocks total)`
+    );
+  }
+
+  /**
+   * Mark that compression is in progress (prevent duplicate compressions)
+   */
+  startCompression() {
+    this._compressionInProgress = true;
   }
 
   /**
@@ -162,6 +259,9 @@ class TranscriptManager {
   clear() {
     this.entries = [];
     this.sessionStartTime = null;
+    this.compressedSummaries = [];
+    this.lastCompressedIndex = 0;
+    this._compressionInProgress = false;
   }
 
   /**

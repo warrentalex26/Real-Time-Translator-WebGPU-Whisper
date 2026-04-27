@@ -1,0 +1,182 @@
+// ============================================
+// Auto-Insights Feature Styles
+// ============================================
+
+// --- Chat Header Controls Wrapper ---
+
+.chat-header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+// --- Auto-Insight Controls ---
+
+.auto-insight-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.auto-insight-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+// --- Toggle Switch (iOS-style) ---
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-normal);
+
+  &::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transition: all var(--transition-normal);
+  }
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent-warning);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+
+  &::before {
+    transform: translateX(18px);
+    background: white;
+  }
+}
+
+// --- Interval Select ---
+
+.interval-select {
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  -webkit-appearance: none;
+  appearance: none;
+
+  // Custom dropdown arrow
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+
+  &:focus {
+    border-color: var(--accent-warning);
+  }
+
+  option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+}
+
+// --- Auto-Insight Chat Message ---
+
+.chat-message.auto-insight {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid var(--accent-warning);
+  position: relative;
+  padding-top: calc(var(--spacing-md) + 20px);
+  animation: insightPulseIn 0.5s ease;
+
+  .auto-insight-badge {
+    position: absolute;
+    top: 6px;
+    left: var(--spacing-md);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-warning);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &::after {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent-warning);
+      border-radius: 50%;
+      animation: insightDot 2s infinite;
+    }
+  }
+
+  .auto-insight-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+}
+
+@keyframes insightPulseIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes insightDot {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+// --- Responsive ---
+
+@media (max-width: 600px) {
+  .chat-header-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .auto-insight-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
