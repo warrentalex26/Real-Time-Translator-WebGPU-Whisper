@@ -65,7 +65,7 @@ export const translations = {
     "empty_hint": "Selecciona una fuente de audio y presiona \"Iniciar Traducción\"",
     "chat_title": "🤖 Pregunta sobre la reunión",
     "chat_empty": "💡 Pregunta algo sobre la conversación",
-    "chat_hint": "Ej: \"¿Qué se habló del ticket NPC-420?\"",
+    "chat_hint": "Ej: \"¿Qué se habló en la reunion?\"",
     "chat_placeholder": "Escribe tu pregunta...",
     "save": "Guardar",
     "footer_info": "🚀 Procesamiento local con WebGPU • 🔒 Tu audio nunca sale del navegador",
