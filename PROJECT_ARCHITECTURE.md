@@ -44,7 +44,13 @@ The application follows an asynchronous, event-driven architecture, separating a
   - Receives audio chunks, processes them, and posts transcribed text strings back to `main.js`.
 - **`translation.js`**: Runs the OPUS-MT (`Xenova/opus-mt-en-es`) model on the main thread. Includes a basic caching mechanism (`translationCache`) to avoid re-translating identical strings.
 - **`transcript-manager.js`**: A state manager (`TranscriptManager` class) that holds the history of transcriptions. Handles formatting timestamps and exporting the transcript to a downloadable text file (Original or Bilingual). Implements **incremental compression**: after every 30 new entries, older transcript blocks are summarized by the AI and stored as compressed summaries. `getSmartAIContext()` returns these summaries plus the last 40 detailed entries, keeping the AI context always within token limits.
-- **`ai-chat.js`**: Manages interactions with AI providers. Includes `askAboutTranscript()` for user questions, `askAboutTranscriptStreaming()` for token-by-token streaming responses, `compressTranscriptBlock()` for incremental transcript compression, `generateAutoInsight()` for periodic automatic insights, and `generateSummary()` for detailed meeting summaries. Supports both local Ollama (NDJSON streaming) and remote Gemini API (SSE streaming).
+- **`ai-chat.js`**: Thin orchestration facade for AI features. Re-exports config functions and routes calls to the appropriate provider module. Public API: `askAboutTranscript`, `askAboutTranscriptStreaming`, `compressTranscriptBlock`, `generateAutoInsight`, `generateSummary`.
+
+### AI Modules (`src/ai/`)
+- **`config.js`**: Centralized `AI_CONFIG` object and provider management (`setAIProvider`, `setGeminiApiKey`, `checkOllamaAvailable`).
+- **`prompts.js`**: All system prompts — Q&A (`buildSystemPrompt`), compression, auto-insight, and summary prompts. Single place to tune AI behavior.
+- **`ollama.js`**: All Ollama API interactions — chat, streaming (NDJSON), compression, insights, and summary generation.
+- **`gemini.js`**: All Gemini API interactions — chat, streaming (SSE), compression, insights, and summary generation.
 - **`i18n.js`**: Handles localization for the UI elements (English/Spanish interface support).
 - **`summary.js`**: Drives the logic for the dedicated AI Summary page (`pages/summary.html`), including markdown parsing, regeneration, and exporting to TXT/Word formats.
 
