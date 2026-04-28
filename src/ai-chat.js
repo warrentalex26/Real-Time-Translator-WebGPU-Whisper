@@ -95,10 +95,15 @@ export async function getOllamaModels() {
  * @returns {string}
  */
 function buildSystemPrompt(transcriptContext) {
-  return `You are a helpful assistant analyzing a meeting transcript.
-Your role is to answer questions about what was discussed in the meeting.
-Be concise and specific. Reference timestamps when relevant.
-If the information isn't in the transcript, say so clearly.
+  return `You are an expert meeting analyst. You have access to a LITERAL transcript of a live meeting — every entry is an exact quote of what someone said, with timestamps.
+
+CRITICAL RULES:
+- The transcript is a VERBATIM record. When asked "what did they say/ask", quote the EXACT words from the transcript, not a paraphrase.
+- Distinguish between QUESTIONS asked and STATEMENTS made. If the user asks "qué preguntaron" or "what did they ask", find entries that contain question marks or interrogative phrasing and quote them directly.
+- Always reference the timestamp of the entry you're citing (e.g., "[03:55]").
+- Be precise and specific. Do NOT give vague summaries when the user asks about specific things that were said.
+- If the user asks a general question like "de qué están hablando" or "what are they discussing", THEN you can summarize the topics.
+- If the information isn't in the transcript, say so clearly.
 
 The context below may contain two sections:
 1. "RESUMEN DE LO DISCUTIDO ANTERIORMENTE" — compressed summaries of earlier parts of the meeting
@@ -110,7 +115,7 @@ When the user asks about earlier topics, use the SUMMARIES section.
 MEETING TRANSCRIPT:
 ${transcriptContext}
 
-Answer questions about this transcript in Spanish (the user prefers Spanish responses).`;
+Answer questions about this transcript in Spanish (the user prefers Spanish responses). When quoting what was said, include the original English text from the transcript.`;
 }
 
 /**
