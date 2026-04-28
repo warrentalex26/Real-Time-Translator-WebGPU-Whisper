@@ -26,7 +26,7 @@ The application follows an asynchronous, event-driven architecture, separating a
 
 ### High-Level Data Flow:
 1. **Capture:** Raw audio is captured via Microphone or System Audio (Screen Share).
-2. **Buffering:** Audio is converted to 16kHz Float32Arrays and buffered into chunks (currently 4 seconds).
+2. **Buffering:** Audio is converted to 16kHz Float32Arrays and buffered intelligently using Voice Activity Detection (VAD). Instead of fixed intervals, audio is sent when a natural speech pause is detected (600ms silence threshold).
 3. **Transcription:** Chunks are sent to a Web Worker running the Whisper model. The worker transcribes the audio to English text.
 4. **Translation:** The English text is sent back to the main thread, displayed immediately (with a loading indicator for translation), and sent to the OPUS-MT model for Spanish translation.
 5. **State & Display:** The `TranscriptManager` stores the bilingual entries. The UI updates dynamically.
@@ -44,7 +44,7 @@ The application follows an asynchronous, event-driven architecture, separating a
   - Receives audio chunks, processes them, and posts transcribed text strings back to `main.js`.
 - **`translation.js`**: Runs the OPUS-MT (`Xenova/opus-mt-en-es`) model on the main thread. Includes a basic caching mechanism (`translationCache`) to avoid re-translating identical strings.
 - **`transcript-manager.js`**: A state manager (`TranscriptManager` class) that holds the history of transcriptions. Handles formatting timestamps and exporting the transcript to a downloadable text file (Original or Bilingual). Implements **incremental compression**: after every 30 new entries, older transcript blocks are summarized by the AI and stored as compressed summaries. `getSmartAIContext()` returns these summaries plus the last 40 detailed entries, keeping the AI context always within token limits.
-- **`ai-chat.js`**: Manages interactions with AI providers. Includes `askAboutTranscript()` for user questions, `compressTranscriptBlock()` for incremental transcript compression, `generateAutoInsight()` for periodic automatic insights, and `generateSummary()` for detailed meeting summaries. Works with both local Ollama and remote Gemini API.
+- **`ai-chat.js`**: Manages interactions with AI providers. Includes `askAboutTranscript()` for user questions, `askAboutTranscriptStreaming()` for token-by-token streaming responses, `compressTranscriptBlock()` for incremental transcript compression, `generateAutoInsight()` for periodic automatic insights, and `generateSummary()` for detailed meeting summaries. Supports both local Ollama (NDJSON streaming) and remote Gemini API (SSE streaming).
 - **`i18n.js`**: Handles localization for the UI elements (English/Spanish interface support).
 - **`summary.js`**: Drives the logic for the dedicated AI Summary page (`pages/summary.html`), including markdown parsing, regeneration, and exporting to TXT/Word formats.
 
@@ -54,7 +54,7 @@ The application follows an asynchronous, event-driven architecture, separating a
 ## 5. Key Architectural Decisions & Constraints
 
 - **Web Workers for Whisper:** Whisper models are heavy. Running them on the main thread would freeze the UI. `whisper-worker.js` isolates this workload.
-- **Audio Chunking Strategy:** Audio is captured in discrete chunks (e.g., 4 seconds) to balance latency with translation context. A stream that is too short lacks context; a stream that is too long delays the UI update.
+- **Audio Chunking Strategy:** Audio chunking uses energy-based Voice Activity Detection (VAD) instead of fixed time intervals. The `AudioProcessor` monitors RMS energy levels in real-time: when energy drops below the threshold for 600ms, the system considers it end-of-speech and sends the accumulated audio as a complete utterance. Safety bounds (min 1.5s, max 12s) prevent micro-fragments and excessively long chunks. This dramatically improves transcription and translation quality by sending complete sentences to Whisper.
 - **Translation on Main Thread:** OPUS-MT is significantly lighter than Whisper. Currently, it runs on the main thread without causing severe blocking, though it could be moved to a worker if performance dictates.
 - **Immediate Feedback UI:** When transcription finishes, the English text is rendered immediately, while the Spanish translation shows a loading state. This ensures the user feels the system is responsive.
 - **Hardware-Aware AI Context:** The local Ollama implementation is configured to use a massive 32,768 context window (`num_ctx`). This allows users with high-RAM systems (like Apple Silicon M4 Pro with 24GB+ RAM) to process transcripts of entire long meetings without truncating context.

@@ -14,6 +14,7 @@ import { translateToSpanish, initializeTranslator } from "./translation.js";
 import { transcriptManager } from "./transcript-manager.js";
 import {
   askAboutTranscript,
+  askAboutTranscriptStreaming,
   setAIProvider,
   setGeminiApiKey,
   checkOllamaAvailable,
@@ -589,7 +590,7 @@ function updateSubtitleTranslation(entryElement, translation) {
 }
 
 /**
- * Send chat message to AI
+ * Send chat message to AI (with streaming response)
  */
 async function sendChatMessage() {
   const question = chatInput.value.trim();
@@ -607,30 +608,41 @@ async function sendChatMessage() {
   // Show user message
   showChatMessage(question, "user");
 
-  // Show loading state
+  // Set loading state
   isChatLoading = true;
   btnSend.disabled = true;
-  const loadingMsg = showChatMessage(t("translating"), "assistant loading");
 
-  try {
-    // Get smart transcript context (compressed summaries + recent entries)
-    const context = transcriptManager.getSmartAIContext();
+  // Create empty assistant message for streaming
+  const responseMsg = document.createElement("div");
+  responseMsg.className = "chat-message assistant";
+  responseMsg.textContent = "";
+  chatMessages.appendChild(responseMsg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // Ask AI
-    const response = await askAboutTranscript(question, context);
+  // Get smart transcript context
+  const context = transcriptManager.getSmartAIContext();
 
-    // Remove loading message
-    loadingMsg.remove();
-
-    // Show response
-    showChatMessage(response, "assistant");
-  } catch (error) {
-    loadingMsg.remove();
-    showChatMessage(`Error: ${error.message}`, "assistant");
-  } finally {
-    isChatLoading = false;
-    btnSend.disabled = false;
-  }
+  // Stream response token-by-token
+  await askAboutTranscriptStreaming(
+    question,
+    context,
+    // onToken — append each token as it arrives
+    (token) => {
+      responseMsg.textContent += token;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    },
+    // onDone — streaming complete
+    () => {
+      isChatLoading = false;
+      btnSend.disabled = false;
+    },
+    // onError — handle errors
+    (errorMsg) => {
+      responseMsg.textContent = errorMsg;
+      isChatLoading = false;
+      btnSend.disabled = false;
+    }
+  );
 }
 
 // ============================================

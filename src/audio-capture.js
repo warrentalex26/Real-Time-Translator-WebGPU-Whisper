@@ -1,10 +1,16 @@
 /**
  * Audio Capture Module
  * Handles microphone and tab audio capture using Web Audio API
+ * Uses Voice Activity Detection (VAD) for intelligent chunking
  */
 
 const SAMPLE_RATE = 16000; // Whisper requires 16kHz audio
-const CHUNK_DURATION = 4; // Process audio in 4-second chunks for lower latency
+
+// VAD Configuration
+const VAD_THRESHOLD = 0.01; // RMS energy threshold to detect voice
+const SILENCE_TIMEOUT_MS = 600; // ms of silence before considering end of speech
+const MIN_CHUNK_DURATION = 1.5; // minimum seconds before sending a chunk
+const MAX_CHUNK_DURATION = 12; // maximum seconds (safety cap)
 
 /**
  * Get microphone audio stream
@@ -80,7 +86,22 @@ export async function getTabAudioStream() {
 }
 
 /**
- * Audio processor class for handling real-time audio processing
+ * Calculate RMS (Root Mean Square) energy of audio samples
+ * Used to detect voice activity
+ * @param {Float32Array} samples - Audio samples
+ * @returns {number} - RMS energy value
+ */
+function calculateRMS(samples) {
+  let sum = 0;
+  for (let i = 0; i < samples.length; i++) {
+    sum += samples[i] * samples[i];
+  }
+  return Math.sqrt(sum / samples.length);
+}
+
+/**
+ * Audio processor class with Voice Activity Detection (VAD)
+ * Sends audio chunks based on speech patterns instead of fixed intervals
  */
 export class AudioProcessor {
   constructor(onAudioChunk) {
@@ -91,6 +112,11 @@ export class AudioProcessor {
     this.audioBuffer = [];
     this.isProcessing = false;
     this.stream = null;
+
+    // VAD state
+    this.isSpeaking = false;
+    this.silenceStart = null; // timestamp when silence began
+    this.chunkStartTime = null; // timestamp when current chunk started accumulating
   }
 
   /**
@@ -101,6 +127,9 @@ export class AudioProcessor {
     this.stream = stream;
     this.isProcessing = true;
     this.audioBuffer = [];
+    this.isSpeaking = false;
+    this.silenceStart = null;
+    this.chunkStartTime = null;
 
     // Create audio context
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -119,18 +148,51 @@ export class AudioProcessor {
       if (!this.isProcessing) return;
 
       const inputData = event.inputBuffer.getChannelData(0);
-      // Copy the data since it will be reused
-      this.audioBuffer.push(new Float32Array(inputData));
+      const samples = new Float32Array(inputData);
+      const rms = calculateRMS(samples);
+      const now = Date.now();
 
-      // Check if we have enough data for a chunk
-      const samplesPerChunk = SAMPLE_RATE * CHUNK_DURATION;
-      const currentSamples = this.audioBuffer.reduce(
-        (sum, arr) => sum + arr.length,
-        0
-      );
+      // Voice detected
+      if (rms > VAD_THRESHOLD) {
+        if (!this.isSpeaking) {
+          this.isSpeaking = true;
+          if (!this.chunkStartTime) {
+            this.chunkStartTime = now;
+          }
+        }
+        this.silenceStart = null; // reset silence timer
+        this.audioBuffer.push(samples);
+      } else {
+        // Silence detected
+        if (this.isSpeaking) {
+          // Still accumulate audio during brief silence (captures natural pauses)
+          this.audioBuffer.push(samples);
 
-      if (currentSamples >= samplesPerChunk) {
-        this.processChunk();
+          if (!this.silenceStart) {
+            this.silenceStart = now;
+          }
+
+          const silenceDuration = now - this.silenceStart;
+          const chunkDuration = this.chunkStartTime
+            ? (now - this.chunkStartTime) / 1000
+            : 0;
+
+          // End of speech: silence exceeded threshold AND chunk is long enough
+          if (
+            silenceDuration >= SILENCE_TIMEOUT_MS &&
+            chunkDuration >= MIN_CHUNK_DURATION
+          ) {
+            this.processChunk();
+          }
+        }
+      }
+
+      // Safety cap: force send if chunk is too long (someone speaking non-stop)
+      if (this.chunkStartTime) {
+        const chunkDuration = (now - this.chunkStartTime) / 1000;
+        if (chunkDuration >= MAX_CHUNK_DURATION) {
+          this.processChunk();
+        }
       }
     };
 
@@ -145,7 +207,7 @@ export class AudioProcessor {
   }
 
   /**
-   * Process accumulated audio into a chunk
+   * Process accumulated audio into a chunk and send it
    */
   processChunk() {
     if (this.audioBuffer.length === 0) return;
@@ -162,8 +224,11 @@ export class AudioProcessor {
       offset += buffer.length;
     }
 
-    // Clear buffer
+    // Reset state
     this.audioBuffer = [];
+    this.isSpeaking = false;
+    this.silenceStart = null;
+    this.chunkStartTime = null;
 
     // Send chunk for processing
     if (this.onAudioChunk && this.isProcessing) {
@@ -203,5 +268,9 @@ export class AudioProcessor {
     }
 
     this.audioBuffer = [];
+    this.isSpeaking = false;
+    this.silenceStart = null;
+    this.chunkStartTime = null;
   }
 }
+

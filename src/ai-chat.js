@@ -232,6 +232,170 @@ export async function askAboutTranscript(question, transcriptContext) {
 }
 
 /**
+ * Ask a question about the transcript with streaming response
+ * Calls onToken for each token as it arrives (ChatGPT-style)
+ * @param {string} question - User's question
+ * @param {string} transcriptContext - The meeting transcript
+ * @param {Function} onToken - Callback called with each token: onToken(tokenText)
+ * @param {Function} onDone - Callback called when streaming is complete: onDone(fullText)
+ * @param {Function} onError - Callback called on error: onError(errorMessage)
+ */
+export async function askAboutTranscriptStreaming(
+  question,
+  transcriptContext,
+  onToken,
+  onDone,
+  onError
+) {
+  if (!transcriptContext || transcriptContext.trim().length === 0) {
+    onDone("No hay transcripción disponible todavía. Inicia una grabación primero.");
+    return;
+  }
+
+  if (!question || question.trim().length === 0) {
+    onDone("Por favor, escribe una pregunta.");
+    return;
+  }
+
+  try {
+    if (AI_CONFIG.provider === "ollama") {
+      await streamFromOllama(question, transcriptContext, onToken, onDone);
+    } else {
+      await streamFromGemini(question, transcriptContext, onToken, onDone);
+    }
+  } catch (error) {
+    console.error("AI streaming error:", error);
+    const errorMsg =
+      AI_CONFIG.provider === "ollama"
+        ? `Error al conectar con Ollama: ${error.message}\n\nAsegúrate de que Ollama esté corriendo:\n1. Instala Ollama: https://ollama.ai\n2. Ejecuta: ollama run llama3.2\n3. Intenta de nuevo`
+        : `Error: ${error.message}`;
+    onError(errorMsg);
+  }
+}
+
+/**
+ * Stream response from Ollama (NDJSON format)
+ */
+async function streamFromOllama(question, transcriptContext, onToken, onDone) {
+  const systemPrompt = buildSystemPrompt(transcriptContext);
+
+  const response = await fetch(`${AI_CONFIG.ollama.baseUrl}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: AI_CONFIG.ollama.model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: question },
+      ],
+      stream: true,
+      options: {
+        num_ctx: AI_CONFIG.ollama.numCtx,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Ollama error: ${response.status} ${response.statusText}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    // Ollama streams NDJSON — one JSON object per line
+    const lines = chunk.split("\n").filter((line) => line.trim());
+
+    for (const line of lines) {
+      try {
+        const parsed = JSON.parse(line);
+        const token = parsed.message?.content || "";
+        if (token) {
+          fullText += token;
+          onToken(token);
+        }
+      } catch {
+        // Skip malformed lines
+      }
+    }
+  }
+
+  onDone(fullText);
+}
+
+/**
+ * Stream response from Gemini (SSE format)
+ */
+async function streamFromGemini(question, transcriptContext, onToken, onDone) {
+  if (!AI_CONFIG.gemini.apiKey) {
+    throw new Error("Gemini API key not set. Call setGeminiApiKey() first.");
+  }
+
+  const systemPrompt = buildSystemPrompt(transcriptContext);
+  const fullPrompt = `${systemPrompt}\n\nUser question: ${question}`;
+
+  const response = await fetch(
+    `${AI_CONFIG.gemini.baseUrl}/models/${AI_CONFIG.gemini.model}:streamGenerateContent?key=${AI_CONFIG.gemini.apiKey}&alt=sse`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      `Gemini error: ${response.status} - ${
+        errorData.error?.message || response.statusText
+      }`
+    );
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    // Gemini SSE: lines starting with "data: " contain JSON
+    const lines = chunk.split("\n");
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        try {
+          const parsed = JSON.parse(line.slice(6));
+          const token =
+            parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          if (token) {
+            fullText += token;
+            onToken(token);
+          }
+        } catch {
+          // Skip malformed data
+        }
+      }
+    }
+  }
+
+  onDone(fullText);
+}
+
+/**
  * Compress a block of transcript entries into a short summary
  * @param {Array} entries - Array of {relativeTime, original} entries
  * @returns {Promise<string>} - Compressed summary (3-5 sentences)
