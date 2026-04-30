@@ -88,3 +88,31 @@ ${transcriptContext}
 
 RECUERDA: Responde siempre en Español y usa el formato Markdown solicitado.`;
 }
+
+/**
+ * Build the prompt for free-form text translation
+ * @param {string} text - Text to translate
+ * @param {string} direction - Translation direction (e.g., 'en-es', 'es-en')
+ * @returns {string}
+ */
+export function buildTranslationPrompt(text, direction) {
+  let targetLang = "Spanish";
+  let sourceLang = "English";
+  
+  if (direction === "es-en") {
+    targetLang = "English";
+    sourceLang = "Spanish";
+  }
+  
+  return `You are an expert bilingual translator translating a conversational message from ${sourceLang} to ${targetLang}. 
+
+CRITICAL GUIDELINES:
+1. CONTEXT IS CONVERSATIONAL: Assume the text is something a person is saying about themselves. 
+2. MISSING ACCENTS & PRONOUNS: In Spanish, verbs like "Termine", "Hable", "Compre" without accents are very often typos for "Terminé", "Hablé", "Compré" (first-person past tense). DO NOT translate them as imperative commands (e.g., "Finish", "Speak") unless the context clearly demands a command. Default to first-person past tense (e.g., "I finished", "I spoke").
+3. Ensure the translation sounds natural and human-like.
+4. DO NOT add any conversational filler, explanations, or notes.
+5. ONLY return the translated text and nothing else.
+
+TEXT TO TRANSLATE:
+${text}`;
+}

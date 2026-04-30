@@ -21,10 +21,11 @@ import {
   getAIProvider,
   compressTranscriptBlock,
   generateAutoInsight,
+  translateText,
 } from "./ai-chat.js";
 import { initI18n, t, getLanguage } from "./i18n.js";
-import { Header } from "./components/Header.js";
-import { Footer } from "./components/Footer.js";
+import { Header } from "./components/shared/Header.js";
+import { Footer } from "./components/shared/Footer.js";
 
 // Inject shared components first
 const appHeader = document.getElementById("app-header");
@@ -62,6 +63,15 @@ const btnSend = document.getElementById("btn-send");
 // DOM Elements - Auto-Insights
 const autoInsightToggle = document.getElementById("auto-insight-toggle");
 const autoInsightInterval = document.getElementById("auto-insight-interval");
+
+// DOM Elements - Control Center Tabs & Translator
+const tabBtns = document.querySelectorAll(".tab-btn");
+const tabContents = document.querySelectorAll(".tab-content");
+const translatorLangSelect = document.getElementById("translator-lang-select");
+const translatorSource = document.getElementById("translator-source");
+const translatorTarget = document.getElementById("translator-target");
+const btnTranslate = document.getElementById("btn-translate");
+const translatorLoading = document.getElementById("translator-loading");
 
 // State
 let audioSource = "microphone";
@@ -215,6 +225,57 @@ function setupEventListeners() {
       startAutoInsightTimer();
     }
   });
+
+  // Control Center Tabs
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetTabId = btn.getAttribute("data-tab");
+      
+      // Update buttons
+      tabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      
+      // Update contents
+      tabContents.forEach(content => {
+        if (content.id === targetTabId) {
+          content.classList.add("active");
+          content.classList.remove("hidden");
+        } else {
+          content.classList.remove("active");
+          content.classList.add("hidden");
+        }
+      });
+    });
+  });
+
+  // Translator Translate Button
+  btnTranslate.addEventListener("click", handleManualTranslation);
+}
+
+/**
+ * Handle manual translation from the Translator tab
+ */
+async function handleManualTranslation() {
+  const sourceText = translatorSource.value.trim();
+  if (!sourceText) return;
+
+  const direction = translatorLangSelect.value;
+  
+  // Show loading state
+  translatorLoading.classList.remove("hidden");
+  btnTranslate.disabled = true;
+  translatorTarget.textContent = "";
+
+  try {
+    const translation = await translateText(sourceText, direction);
+    translatorTarget.textContent = translation;
+  } catch (error) {
+    console.error("Manual translation error:", error);
+    translatorTarget.textContent = `[Error: ${error.message}]`;
+  } finally {
+    translatorLoading.classList.add("hidden");
+    btnTranslate.disabled = false;
+  }
 }
 
 /**

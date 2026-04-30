@@ -46,7 +46,14 @@ export const translations = {
     "auto_insight_badge": "⚡ Auto-Insight",
     "auto_insight_generating": "Generating insight...",
     "auto_insight_enabled": "Auto-Insights enabled",
-    "auto_insight_disabled": "Auto-Insights disabled"
+    "auto_insight_disabled": "Auto-Insights disabled",
+    "live_transcript": "Live Transcript",
+    "setup_tab": "Setup",
+    "translator_tab": "Translator",
+    "translate_action": "Translate",
+    "translate_placeholder": "Type or paste text to translate...",
+    "en_to_es": "English to Spanish",
+    "es_to_en": "Spanish to English"
   },
   es: {
     "title": "Traductor en Tiempo Real",
@@ -95,7 +102,14 @@ export const translations = {
     "auto_insight_badge": "⚡ Auto-Insight",
     "auto_insight_generating": "Generando insight...",
     "auto_insight_enabled": "Auto-Insights activados",
-    "auto_insight_disabled": "Auto-Insights desactivados"
+    "auto_insight_disabled": "Auto-Insights desactivados",
+    "live_transcript": "Transcripción en Vivo",
+    "setup_tab": "Configuración",
+    "translator_tab": "Traductor",
+    "translate_action": "Traducir",
+    "translate_placeholder": "Escribe o pega texto para traducir...",
+    "en_to_es": "Inglés a Español",
+    "es_to_en": "Español a Inglés"
   }
 };
 
@@ -135,13 +149,21 @@ export function updateDOM() {
       
       if (textNode) {
           textNode.textContent = translations[currentLanguage][key];
-      } else if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+      } else if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.hasAttribute('placeholder')) {
           el.setAttribute("placeholder", translations[currentLanguage][key]);
       } else if (el.tagName === 'BUTTON' && el.hasAttribute('title')) {
           el.setAttribute("title", translations[currentLanguage][key]);
       } else {
         el.textContent = translations[currentLanguage][key];
       }
+    }
+  });
+
+  // Handle elements with specific data-i18n-placeholder
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (translations[currentLanguage][key]) {
+      el.setAttribute("placeholder", translations[currentLanguage][key]);
     }
   });
   

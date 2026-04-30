@@ -4,16 +4,6 @@
  * using provider-specific modules (ollama.js, gemini.js)
  */
 
-// Re-export configuration functions (zero breaking changes for consumers)
-export {
-  setAIProvider,
-  getAIProvider,
-  setGeminiApiKey,
-  setOllamaModel,
-  checkOllamaAvailable,
-  getOllamaModels,
-} from "./ai/config.js";
-
 import { AI_CONFIG } from "./ai/config.js";
 import {
   buildCompressionPrompt,
@@ -205,3 +195,16 @@ export async function generateSummary(transcriptContext) {
     throw error;
   }
 }
+
+// Re-export configuration functions (zero breaking changes for consumers)
+export {
+  setAIProvider,
+  getAIProvider,
+  setGeminiApiKey,
+  setOllamaModel,
+  checkOllamaAvailable,
+  getOllamaModels,
+} from "./ai/config.js";
+
+// Text Translation
+export { translateText } from "./ai/translator.js";

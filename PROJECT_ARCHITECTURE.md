@@ -4,7 +4,7 @@ This document provides a high-level architectural overview of the TraductorWebGP
 
 ## 1. Project Overview
 
-**TraductorWebGPU** is a real-time audio translation application that runs entirely in the browser. It captures audio from a microphone or browser tab, transcribes it from English to text, and translates the text into Spanish. It also includes an AI chat feature and a dedicated AI Summary generator that allows the user to deeply analyze the generated transcript.
+**TraductorWebGPU** is a real-time audio translation application that runs entirely in the browser. It captures audio from a microphone or browser tab, transcribes it from English to text, and translates the text into Spanish. It also includes an AI chat feature, a dedicated AI Summary generator, and a built-in LLM text translator for manual translations.
 
 **Core Philosophy:** 100% Local execution (except for optional Gemini API integration) utilizing WebGPU for hardware-accelerated machine learning directly within the browser, ensuring low latency and privacy. It features a modern Glassmorphism UI built with reusable Vanilla JS components.
 
@@ -30,7 +30,7 @@ The application follows an asynchronous, event-driven architecture, separating a
 3. **Transcription:** Chunks are sent to a Web Worker running the Whisper model. The worker transcribes the audio to English text.
 4. **Translation:** The English text is sent back to the main thread, displayed immediately (with a loading indicator for translation), and sent to the OPUS-MT model for Spanish translation.
 5. **State & Display:** The `TranscriptManager` stores the bilingual entries. The UI updates dynamically.
-6. **AI Features:** The user can ask questions in the chat panel, or trigger a "Detailed AI Summary" (🪄). A **Smart Context** system compresses older transcript blocks into summaries so that AI queries always fit within context limits, even for multi-hour meetings. **Auto-Insights** periodically generate automatic summaries of the current discussion topic at configurable intervals (1–10 min).
+6. **AI Features:** The user can ask questions in the chat panel, trigger a "Detailed AI Summary" (🪄), or use the **Translator Tab** in the Control Center to manually translate free-form text using Ollama or Gemini. A **Smart Context** system compresses older transcript blocks into summaries so that AI queries always fit within context limits, even for multi-hour meetings. **Auto-Insights** periodically generate automatic summaries of the current discussion topic at configurable intervals (1–10 min).
 
 ## 4. Module Breakdown
 
@@ -48,9 +48,10 @@ The application follows an asynchronous, event-driven architecture, separating a
 
 ### AI Modules (`src/ai/`)
 - **`config.js`**: Centralized `AI_CONFIG` object and provider management (`setAIProvider`, `setGeminiApiKey`, `checkOllamaAvailable`).
-- **`prompts.js`**: All system prompts — Q&A (`buildSystemPrompt`), compression, auto-insight, and summary prompts. Single place to tune AI behavior.
-- **`ollama.js`**: All Ollama API interactions — chat, streaming (NDJSON), compression, insights, and summary generation.
-- **`gemini.js`**: All Gemini API interactions — chat, streaming (SSE), compression, insights, and summary generation.
+- **`prompts.js`**: All system prompts — Q&A (`buildSystemPrompt`), compression, auto-insight, summary, and general text translation prompts. Single place to tune AI behavior.
+- **`ollama.js`**: All Ollama API interactions — chat, streaming (NDJSON), compression, insights, translation, and summary generation.
+- **`gemini.js`**: All Gemini API interactions — chat, streaming (SSE), compression, insights, translation, and summary generation.
+- **`translator.js`**: Dedicated module for the free-form text translator tool in the Control Center. Routes translation requests (en->es or es->en) to the active AI provider.
 - **`i18n.js`**: Handles localization for the UI elements (English/Spanish interface support).
 - **`summary.js`**: Drives the logic for the dedicated AI Summary page (`pages/summary.html`), including markdown parsing, regeneration, and exporting to TXT/Word formats.
 

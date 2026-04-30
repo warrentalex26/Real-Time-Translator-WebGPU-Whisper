@@ -33,75 +33,117 @@
 
         <!-- Control Panel -->
         <section class="control-panel glass-card">
-          <div class="panel-header">
-            <h2>Control Center</h2>
-          </div>
-          <div class="source-selector">
-            <label class="selector-label" data-i18n="audio_source">Audio Source</label>
-            <div class="source-buttons">
-              <button
-                class="source-btn active"
-                id="btn-microphone"
-                data-source="microphone"
-              >
-                <span class="btn-icon">🎤</span>
-                <span class="btn-text" data-i18n="microphone">Microphone</span>
-              </button>
-              <button class="source-btn" id="btn-tab" data-source="tab">
-                <span class="btn-icon">🔊</span>
-                <span class="btn-text" data-i18n="tab_audio">Tab Audio</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="model-selector">
-            <label class="selector-label" data-i18n="whisper_model">Whisper Model</label>
-            <div class="model-buttons">
-              <button class="model-btn" data-model="tiny">
-                <span class="model-icon">⚡</span>
-                <span class="model-info">
-                  <span class="model-name" data-i18n="fast">Fast</span>
-                  <span class="model-size">~39MB</span>
-                </span>
-              </button>
-              <button class="model-btn active" data-model="base">
-                <span class="model-icon">⚖️</span>
-                <span class="model-info">
-                  <span class="model-name" data-i18n="balanced">Balanced</span>
-                  <span class="model-size">~74MB</span>
-                </span>
-              </button>
-              <button class="model-btn" data-model="small">
-                <span class="model-icon">🎯</span>
-                <span class="model-info">
-                  <span class="model-name" data-i18n="accurate">Accurate</span>
-                  <span class="model-size">~244MB</span>
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div class="action-controls">
-            <button class="primary-btn" id="btn-start" disabled>
-              <span class="btn-content">
-                <span class="play-icon">▶</span>
-                <span data-i18n="start_translation">Start Translation</span>
-              </span>
+          <div class="panel-header tabs-header">
+            <button class="tab-btn active" data-tab="tab-setup">
+              <span class="tab-icon">⚙️</span>
+              <span data-i18n="setup_tab">Setup</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-translator">
+              <span class="tab-icon">🌍</span>
+              <span data-i18n="translator_tab">Translator</span>
             </button>
           </div>
 
-          <!-- Model Loading Progress -->
-          <div class="progress-container hidden" id="progress-container">
-            <div class="progress-header">
-              <span class="progress-label" data-i18n="loading_model">Loading Whisper model...</span>
-              <span class="progress-percent" id="progress-percent">0%</span>
+          <!-- Setup Tab Content -->
+          <div class="tab-content active" id="tab-setup">
+            <div class="source-selector">
+              <label class="selector-label" data-i18n="audio_source">Audio Source</label>
+              <div class="source-buttons">
+                <button
+                  class="source-btn active"
+                  id="btn-microphone"
+                  data-source="microphone"
+                >
+                  <span class="btn-icon">🎤</span>
+                  <span class="btn-text" data-i18n="microphone">Microphone</span>
+                </button>
+                <button class="source-btn" id="btn-tab" data-source="tab">
+                  <span class="btn-icon">🔊</span>
+                  <span class="btn-text" data-i18n="tab_audio">Tab Audio</span>
+                </button>
+              </div>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="progress-fill"></div>
+
+            <div class="model-selector">
+              <label class="selector-label" data-i18n="whisper_model">Whisper Model</label>
+              <div class="model-buttons">
+                <button class="model-btn" data-model="tiny">
+                  <span class="model-icon">⚡</span>
+                  <span class="model-info">
+                    <span class="model-name" data-i18n="fast">Fast</span>
+                    <span class="model-size">~39MB</span>
+                  </span>
+                </button>
+                <button class="model-btn active" data-model="base">
+                  <span class="model-icon">⚖️</span>
+                  <span class="model-info">
+                    <span class="model-name" data-i18n="balanced">Balanced</span>
+                    <span class="model-size">~74MB</span>
+                  </span>
+                </button>
+                <button class="model-btn" data-model="small">
+                  <span class="model-icon">🎯</span>
+                  <span class="model-info">
+                    <span class="model-name" data-i18n="accurate">Accurate</span>
+                    <span class="model-size">~244MB</span>
+                  </span>
+                </button>
+              </div>
             </div>
-            <p class="progress-note" data-i18n="loading_note">
-              First time: ~200MB. Will be cached.
-            </p>
+
+            <div class="action-controls">
+              <button class="primary-btn" id="btn-start" disabled>
+                <span class="btn-content">
+                  <span class="play-icon">▶</span>
+                  <span data-i18n="start_translation">Start Translation</span>
+                </span>
+              </button>
+            </div>
+
+            <!-- Model Loading Progress -->
+            <div class="progress-container hidden" id="progress-container">
+              <div class="progress-header">
+                <span class="progress-label" data-i18n="loading_model">Loading Whisper model...</span>
+                <span class="progress-percent" id="progress-percent">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+              <p class="progress-note" data-i18n="loading_note">
+                First time: ~200MB. Will be cached.
+              </p>
+            </div>
+          </div>
+
+          <!-- Translator Tab Content -->
+          <div class="tab-content hidden" id="tab-translator">
+            <div class="translator-ui">
+              <div class="translator-controls">
+                <select id="translator-lang-select" class="lang-select">
+                  <option value="en-es" data-i18n="en_to_es">English to Spanish</option>
+                  <option value="es-en" data-i18n="es_to_en" selected>Spanish to English</option>
+                </select>
+                <button class="primary-btn small-btn" id="btn-translate">
+                  <span class="btn-content">
+                    <span class="translate-icon">✨</span>
+                    <span data-i18n="translate_action">Translate</span>
+                  </span>
+                </button>
+              </div>
+              
+              <div class="translator-inputs">
+                <textarea id="translator-source" placeholder="Type or paste text to translate..." data-i18n-placeholder="translate_placeholder" class="translator-textarea"></textarea>
+                <div class="translator-divider">
+                </div>
+                <div class="translator-output-container">
+                  <div id="translator-target" class="translator-textarea read-only"></div>
+                  <div id="translator-loading" class="translator-loading hidden">
+                    <span class="loading-spinner"></span>
+                    <span data-i18n="translating">Translating...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -111,7 +153,7 @@
             <div class="title-with-icon">
               <span class="title-icon">📄</span>
               <div>
-                <h2>Live Transcript</h2>
+                <h2 data-i18n="live_transcript">Live Transcript</h2>
                 <p class="subtitle-label">Subtítulos en Tiempo Real</p>
               </div>
             </div>
@@ -160,6 +202,7 @@
                 </label>
                 <span class="auto-insight-label" data-i18n="auto_insight_label">Auto-Insights</span>
                 <select id="auto-insight-interval" class="interval-select">
+                  <option value="30000">30 sec</option>
                   <option value="60000" selected>1 min</option>
                   <option value="120000">2 min</option>
                   <option value="180000">3 min</option>

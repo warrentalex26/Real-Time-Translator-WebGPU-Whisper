@@ -1,6 +1,6 @@
 import { generateSummary, getAIProvider } from './ai-chat.js';
-import { Header } from "./components/Header.js";
-import { Footer } from "./components/Footer.js";
+import { Header } from "./components/shared/Header.js";
+import { Footer } from "./components/shared/Footer.js";
 import { initI18n, t, getLanguage } from "./i18n.js";
 
 // Inject shared components first

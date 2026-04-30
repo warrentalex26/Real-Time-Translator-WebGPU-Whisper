@@ -10,6 +10,7 @@ A **fully local, privacy-first** real-time audio translator that runs entirely i
 - **🌐 Local Translation** — OPUS-MT English→Spanish, no API calls needed
 - **🎤 Dual Audio Sources** — Capture from microphone or browser tab audio
 - **📝 Real-Time Subtitles** — Bilingual subtitles (English + Spanish) with timestamps
+- **🌍 Built-in LLM Translator** — Translate free-form text bidirectionally (EN↔ES) right from the dashboard
 - **🤖 AI Meeting Assistant** — Ask questions about the transcript using Ollama (local) or Gemini API
 - **🪄 Detailed AI Summaries** — Generate comprehensive, well-formatted meeting summaries in a dedicated view
 - **⚡ Auto-Insights** — Automatic periodic summaries of the current discussion topic (configurable 1–10 min intervals)
@@ -70,9 +71,10 @@ The app will be available at `http://localhost:5173`.
    - 🎯 **Preciso** (small, ~244MB) — Most accurate, slower
 3. **Click "Iniciar Traducción"** — Models will download on first use, then recording begins
 4. **Speak in English** — Real-time bilingual subtitles will appear (English original + Spanish translation)
-5. **Ask the AI** — Use the chat panel to ask questions about the conversation (requires Ollama or Gemini API key)
-6. **Download transcript** — Click the 💾 button to export a bilingual transcript
-7. **Generate AI Summary** — Click the 🪄 (Magic Wand) button to analyze the entire meeting and generate a detailed summary in a new tab
+5. **Use the built-in Translator** — Switch to the "Translator" tab in the Control Center to manually translate copied text
+6. **Ask the AI** — Use the chat panel to ask questions about the conversation (requires Ollama or Gemini API key)
+7. **Download transcript** — Click the 💾 button to export a bilingual transcript
+8. **Generate AI Summary** — Click the 🪄 (Magic Wand) button to analyze the entire meeting and generate a detailed summary in a new tab
 
 ### AI Chat Setup
 
