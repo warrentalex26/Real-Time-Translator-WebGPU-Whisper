@@ -7,6 +7,13 @@ export default defineConfig({
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
+    // Proxy API requests to Express backend in development
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+    },
   },
   css: {
     preprocessorOptions: {
@@ -24,6 +31,7 @@ export default defineConfig({
       input: {
         main: "index.html",
         summary: "pages/summary.html",
+        search: "pages/search.html",
       },
     },
   },

@@ -22,23 +22,43 @@
   gap: var(--spacing-md);
 }
 
-// --- Logo ---
+// --- Header Navigation ---
 
-.logo {
+.header-nav {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-xs);
+}
 
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
+.nav-link {
+  position: relative;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+
+  &:hover {
     color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
   }
 
-  .version {
-    color: var(--text-muted);
-    font-weight: 400;
-    margin-left: var(--spacing-sm);
+  &.active {
+    color: var(--text-primary);
+    background: rgba(99, 102, 241, 0.12);
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      background: var(--accent-primary);
+      border-radius: 1px;
+    }
   }
 }
 

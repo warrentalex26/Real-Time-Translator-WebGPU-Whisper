@@ -1,9 +1,15 @@
 export function Header() {
+  // Detect current page to highlight active nav link
+  const path = window.location.pathname;
+  const isHome = path === "/" || path.endsWith("index.html");
+  const isSearch = path.includes("search");
+
   return `
     <header class="header">
-      <div class="logo">
-        <h1>TraductorWebGPU <span class="version">Dashboard V1</span></h1>
-      </div>
+      <nav class="header-nav">
+        <a href="/" class="nav-link ${isHome ? "active" : ""}" data-i18n="nav_home">Home</a>
+        <a href="/pages/search.html" class="nav-link ${isSearch ? "active" : ""}" data-i18n="nav_search">Search Recordings</a>
+      </nav>
       <div class="header-controls">
         <div class="lang-display">
           <span class="lang-text active" id="lang-en">[EN]</span>

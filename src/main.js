@@ -26,6 +26,8 @@ import {
 import { initI18n, t, getLanguage } from "./i18n.js";
 import { Header } from "./components/shared/Header.js";
 import { Footer } from "./components/shared/Footer.js";
+import { createSaveModal } from "./components/SaveModal.js";
+import { AI_CONFIG } from "./ai/config.js";
 
 // Inject shared components first
 const appHeader = document.getElementById("app-header");
@@ -84,6 +86,7 @@ let isChatLoading = false;
 let autoInsightTimer = null;
 let autoInsightEnabled = true;
 let autoInsightIntervalMs = 60000; // 1 min default
+let saveModal = null;
 
 // Initialize app
 document.addEventListener("DOMContentLoaded", init);
@@ -96,6 +99,9 @@ async function init() {
   loadSavedApiKey();
   loadSavedModel();
   loadAutoInsightPrefs();
+  
+  // Create save modal instance
+  saveModal = createSaveModal();
   
   // Listen for language changes to update specific UI parts
   document.addEventListener("languageChanged", updateDynamicUI);
@@ -436,7 +442,7 @@ async function startRecording() {
 }
 
 /**
- * Stop recording
+ * Stop recording and show save modal
  */
 function stopRecording() {
   isRecording = false;
@@ -466,6 +472,86 @@ function stopRecording() {
   `;
   btnStart.classList.remove("recording");
   recordingIndicator.classList.add("hidden");
+
+  // Show save modal if there are entries
+  if (transcriptManager.count > 0 && saveModal) {
+    saveModal.show({
+      transcriptManager,
+      onDownload: () => transcriptManager.downloadAsFile("bilingual"),
+      generateTitleAndTags: generateRecordingTitleAndTags,
+    });
+  }
+}
+
+/**
+ * Use Gemini to auto-generate a recording title and tags from transcript context.
+ * @returns {Promise<{title: string, tags: string[]}>}
+ */
+async function generateRecordingTitleAndTags() {
+  const recentContext = transcriptManager.getRecentContext(20);
+  if (!recentContext) {
+    return { title: "", tags: [] };
+  }
+
+  const prompt = `Analyze this meeting transcript and generate:
+1. A concise, descriptive title (max 60 chars). Format: "[Meeting Type] - [Main Topic]"
+2. 2-3 lowercase tags (kebab-case) that categorize the meeting content
+
+Transcript:
+${recentContext}
+
+Respond in EXACTLY this JSON format, nothing else:
+{"title": "...", "tags": ["tag1", "tag2"]}`;
+
+  try {
+    let responseText = "";
+
+    if (AI_CONFIG.provider === "ollama") {
+      const response = await fetch(`${AI_CONFIG.ollama.baseUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_CONFIG.ollama.model,
+          messages: [{ role: "user", content: prompt }],
+          stream: false,
+          options: { temperature: 0.3 },
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        responseText = data.message?.content || "";
+      }
+    } else {
+      if (!AI_CONFIG.gemini.apiKey) return { title: "", tags: [] };
+      const response = await fetch(
+        `${AI_CONFIG.gemini.baseUrl}/models/${AI_CONFIG.gemini.model}:generateContent?key=${AI_CONFIG.gemini.apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 256 },
+          }),
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      }
+    }
+
+    if (!responseText) return { title: "", tags: [] };
+
+    const jsonStart = responseText.indexOf("{");
+    const jsonEnd = responseText.lastIndexOf("}") + 1;
+    if (jsonStart === -1 || jsonEnd === 0) return { title: "", tags: [] };
+
+    const jsonStr = responseText.substring(jsonStart, jsonEnd);
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.warn("AI title generation failed:", error);
+    return { title: "", tags: [] };
+  }
 }
 
 /**

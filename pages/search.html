@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Search your meeting transcripts stored in Notion using AI-powered natural language queries."
+    />
+    <meta name="theme-color" content="#1a1a2e" />
+    <title data-i18n="search_page_title">Search Recordings | TraductorWebGPU</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles/main.scss" />
+  </head>
+  <body class="search-page">
+    <div class="app">
+      <!-- Background Effects -->
+      <div class="background-effects">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+      </div>
+
+      <!-- Main Container -->
+      <main class="search-layout">
+        <!-- Header -->
+        <div id="app-header"></div>
+
+        <!-- Search Header -->
+        <div class="search-hero">
+          <h1>
+            <span class="search-hero-icon">🔍</span>
+            <span data-i18n="search_recordings_title">Search Recordings</span>
+          </h1>
+          <p data-i18n="search_description">
+            Ask questions about your saved meeting transcripts in natural language.
+          </p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar-wrapper">
+          <div class="search-filter-inline">
+            <label for="search-project" data-i18n="search_in_label">Search in</label>
+            <select id="search-project" class="search-select">
+              <option value="" data-i18n="all_projects">All Projects</option>
+            </select>
+          </div>
+          <div class="search-input-container">
+            <input
+              type="text"
+              id="search-input"
+              class="search-input"
+              placeholder="Did anyone mention ticket WSC-1313?"
+              data-i18n-placeholder="search_placeholder"
+              autocomplete="off"
+            />
+            <button class="search-submit-btn" id="btn-search" title="Search">
+              🔍
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Area -->
+        <div class="search-results-area">
+          <!-- Loading State -->
+          <div class="search-loading hidden" id="search-loading">
+            <div class="search-loading-steps">
+              <div class="loading-step active" id="step-keywords">
+                <span class="step-icon">🔑</span>
+                <span data-i18n="extracting_keywords">Extracting keywords...</span>
+              </div>
+              <div class="loading-step" id="step-searching">
+                <span class="step-icon">📂</span>
+                <span data-i18n="searching_notion">Searching in Notion...</span>
+              </div>
+              <div class="loading-step" id="step-analyzing">
+                <span class="step-icon">🤖</span>
+                <span data-i18n="analyzing_results">Analyzing with AI...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Response -->
+          <div class="search-response glass-card hidden" id="search-response">
+            <div class="response-header">
+              <span class="response-icon">🤖</span>
+              <span data-i18n="ai_response_label">AI Response</span>
+            </div>
+            <div class="response-content" id="response-content"></div>
+          </div>
+
+          <!-- Sources Found -->
+          <div class="search-sources hidden" id="search-sources">
+            <h3>
+              <span>📄</span>
+              <span data-i18n="sources_found">Sources found</span>
+              <span class="source-count" id="source-count">(0)</span>
+            </h3>
+            <div class="sources-list" id="sources-list"></div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="search-empty" id="search-empty">
+            <div class="empty-illustration">🗂️</div>
+            <p data-i18n="search_empty_text">
+              Search across your saved meeting transcripts.
+            </p>
+            <p class="empty-examples" data-i18n="search_examples">
+              Try: "Was ticket WSC-1313 discussed?" or "When did pepe mention the feature of excel?"
+            </p>
+          </div>
+
+          <!-- No Results -->
+          <div class="search-no-results hidden" id="search-no-results">
+            <div class="empty-illustration">🔍</div>
+            <p data-i18n="no_results_found">No matching transcripts found.</p>
+            <p class="empty-examples" data-i18n="no_results_hint">
+              Try different keywords or search in a different project.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div id="app-footer"></div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/search.js"></script>
+  </body>
+</html>
