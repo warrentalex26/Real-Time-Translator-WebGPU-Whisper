@@ -39,7 +39,7 @@ Audio Input → AudioProcessor (4s chunks) → Whisper Worker (WebGPU) → Trans
 
 ## 📦 Prerequisites
 
-- **Node.js** 18+ (check `.nvmrc`)
+- **Node.js** 20+ (check `.nvmrc`)
 - A **WebGPU-compatible browser** (Chrome 113+, Edge 113+). Falls back to WASM if unavailable.
 - *(Optional)* [Ollama](https://ollama.ai) for local AI chat — install and run `ollama run llama3.2`
 - *(Optional)* A [Gemini API key](https://aistudio.google.com/app/apikey) for cloud-based AI chat
