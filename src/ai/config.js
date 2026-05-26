@@ -16,8 +16,8 @@ export const AI_CONFIG = {
 
   gemini: {
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-    model: "gemini-1.5-flash",
-    apiKey: "", // Set via setGeminiApiKey()
+    model: "gemini-2.5-flash",
+    apiKey: import.meta.env.VITE_GEMINI_API_KEY || "",
   },
 };
 

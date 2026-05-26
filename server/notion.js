@@ -345,56 +345,79 @@ export class NotionService {
 
   /**
    * Search within a single database for pages matching the query.
-   * Uses Notion's database query with title filter for each keyword,
-   * then reads page content to find full-text matches.
+   *
+   * Strategy:
+   *  1. Fetch page metadata (no content yet) — 1 API call
+   *  2. Read page content in parallel batches of BATCH_SIZE
+   *  3. Stop early once MAX_RESULTS matches are found (no need to scan all 80+ pages)
+   *
+   * This makes search ~5x faster vs reading pages one-by-one.
    *
    * @param {string} query
    * @param {string} databaseId
    * @returns {Array}
    */
   async _searchInDatabase(query, databaseId) {
-    // Use Notion's global search scoped to the database
-    // Notion search API is limited — we query all pages then filter client-side
+    const BATCH_SIZE = 5;   // read 5 pages in parallel at a time
+    const MAX_RESULTS = 10; // stop once we have this many matches
+
+    // 1. Fetch all page metadata (titles, dates, categories) — single request
     const response = await this.client.databases.query({
       database_id: databaseId,
-      page_size: 50,
+      page_size: 100,
       sorts: [{ property: "Date", direction: "descending" }],
     });
 
+    const pages = response.results;
+
+    // Pre-parse keywords once
+    const keywords = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((k) => k.length >= 1);
+
     const matchedPages = [];
 
-    for (const page of response.results) {
-      const titleParts = page.properties.Name?.title || [];
-      const title = titleParts.map((t) => t.plain_text).join("");
-      const date =
-        page.properties.Date?.date?.start || "";
-      const category =
-        page.properties.Category?.select?.name || "";
+    // 2. Process pages in parallel batches — stop early if we have enough
+    for (let i = 0; i < pages.length; i += BATCH_SIZE) {
+      if (matchedPages.length >= MAX_RESULTS) break; // ✅ early exit
 
-      // Read the page content to do full-text matching
-      const content = await this._getPageContent(page.id);
-      const lowerContent = content.toLowerCase();
-      const lowerQuery = query.toLowerCase();
+      const batch = pages.slice(i, i + BATCH_SIZE);
 
-      // Split query into words and check how many match
-      const keywords = lowerQuery.split(/\s+/).filter((k) => k.length > 2);
-      const matchCount = keywords.filter((kw) =>
-        lowerContent.includes(kw)
-      ).length;
+      // Read all pages in this batch simultaneously
+      const batchResults = await Promise.allSettled(
+        batch.map(async (page) => {
+          const titleParts = page.properties.Name?.title || [];
+          const title = titleParts.map((t) => t.plain_text).join("");
+          const date = page.properties.Date?.date?.start || "";
+          const category = page.properties.Category?.select?.name || "";
 
-      if (matchCount > 0) {
-        // Extract a relevant excerpt around the first match
-        const excerpt = this._extractExcerpt(content, keywords[0]);
+          const content = await this._getPageContent(page.id);
+          const lowerContent = content.toLowerCase();
 
-        matchedPages.push({
-          id: page.id,
-          title,
-          date,
-          category,
-          matchCount,
-          excerpt,
-          fullContent: content,
-        });
+          const matchCount = keywords.filter((kw) =>
+            lowerContent.includes(kw)
+          ).length;
+
+          if (matchCount > 0) {
+            return {
+              id: page.id,
+              title,
+              date,
+              category,
+              matchCount,
+              excerpt: this._extractExcerpt(content, keywords[0]),
+              fullContent: content,
+            };
+          }
+          return null;
+        })
+      );
+
+      for (const result of batchResults) {
+        if (result.status === "fulfilled" && result.value) {
+          matchedPages.push(result.value);
+        }
       }
     }
 
@@ -405,26 +428,35 @@ export class NotionService {
   }
 
   /**
-   * Read all text content from a page's blocks.
+   * Read ALL text content from a page's blocks, paginating through every batch.
+   * Notion returns max 100 blocks per request — we follow `has_more` / `next_cursor`
+   * to guarantee the full transcript is loaded regardless of length.
+   *
    * @param {string} pageId
-   * @returns {string}
+   * @returns {Promise<string>}
    */
   async _getPageContent(pageId) {
-    const blocks = await this.client.blocks.children.list({
-      block_id: pageId,
-      page_size: 100,
-    });
-
     const textParts = [];
+    let cursor = undefined;
 
-    for (const block of blocks.results) {
-      const richText =
-        block[block.type]?.rich_text || block[block.type]?.text || [];
-      if (Array.isArray(richText)) {
-        const text = richText.map((rt) => rt.plain_text).join("");
-        if (text) textParts.push(text);
+    do {
+      const response = await this.client.blocks.children.list({
+        block_id: pageId,
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      });
+
+      for (const block of response.results) {
+        const richText =
+          block[block.type]?.rich_text || block[block.type]?.text || [];
+        if (Array.isArray(richText)) {
+          const text = richText.map((rt) => rt.plain_text).join("");
+          if (text) textParts.push(text);
+        }
       }
-    }
+
+      cursor = response.has_more ? response.next_cursor : undefined;
+    } while (cursor);
 
     return textParts.join("\n");
   }

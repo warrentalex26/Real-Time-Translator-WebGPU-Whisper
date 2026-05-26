@@ -300,6 +300,18 @@ export function createSaveModal() {
     return div.innerHTML;
   }
 
+  /**
+   * Format a Date as dd/mm/yyyy
+   * @param {Date} date
+   * @returns {string}
+   */
+  function formatDateDDMMYYYY(date) {
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
   // --- Public API -----------------------------------------------------------
 
   /**
@@ -360,7 +372,8 @@ export function createSaveModal() {
       try {
         const { title, tags: suggestedTags } = await generateTitleAndTags();
         if (!nameInput.value) {
-          nameInput.value = title || "";
+          const dateStr = formatDateDDMMYYYY(now);
+          nameInput.value = title ? `${title} - ${dateStr}` : dateStr;
         }
         if (suggestedTags?.length) {
           tags = [...new Set([...tags, ...suggestedTags])];
@@ -370,11 +383,11 @@ export function createSaveModal() {
         console.warn("AI title generation failed:", error);
         // Fallback title
         if (!nameInput.value) {
-          nameInput.value = `Recording - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+          nameInput.value = `Recording - ${formatDateDDMMYYYY(now)}`;
         }
       }
     } else {
-      nameInput.value = `Recording - ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+      nameInput.value = `Recording - ${formatDateDDMMYYYY(now)}`;
     }
 
     nameSkeleton.classList.add("hidden");

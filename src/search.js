@@ -64,13 +64,16 @@ async function init() {
  */
 function loadAIPrefs() {
   const provider = localStorage.getItem("ai_provider") || "ollama";
-  const geminiKey = localStorage.getItem("gemini_api_key");
   const ollamaModel = localStorage.getItem("ollama_model");
 
   if (provider === "gemini" || provider === "ollama") {
     AI_CONFIG.provider = provider;
   }
-  if (geminiKey) AI_CONFIG.gemini.apiKey = geminiKey;
+  // If Gemini key is available from .env, prefer it for the search page
+  // (more reliable than assuming Ollama is running locally)
+  if (AI_CONFIG.gemini.apiKey) {
+    AI_CONFIG.provider = "gemini";
+  }
   if (ollamaModel) AI_CONFIG.ollama.model = ollamaModel;
 }
 
@@ -148,14 +151,15 @@ async function handleSearch() {
  * @returns {string} — Keywords joined by spaces
  */
 async function extractKeywords(query) {
-  const prompt = `You are a search keyword extractor. Given a natural language question about meeting transcripts, extract 2-5 search keywords that would help find relevant transcripts.
+  const prompt = `You are a search keyword extractor for meeting transcripts. Given a natural language question, extract 2-5 clean search keywords.
 
 Rules:
-- Return ONLY the keywords separated by spaces
+- Return ONLY the keywords separated by spaces, nothing else
+- CORRECT any spelling mistakes or typos in technical terms, proper nouns, and product names (e.g. "cloudlfare" → "cloudflare", "reactt" → "react")
 - Include proper nouns, ticket numbers, feature names, people names
-- Remove common words like "did", "about", "the", "when"
+- Remove common filler words ("did", "about", "the", "when", "se", "hablo", "algo", "de", "que")
 - If there's a ticket number (e.g., WSC-1313), keep it exactly as-is
-- Keep technical terms intact
+- Keep technical terms intact and correctly spelled
 
 Question: "${query}"
 
@@ -231,28 +235,35 @@ function extractKeywordsFallback(query) {
  * @returns {string} — AI-generated answer
  */
 async function analyzeWithAI(question, results) {
-  // Build context from found transcripts (limit to avoid token overflow)
+  // Build context — Gemini 2.5 Flash supports 1M tokens, so we can send much more
   const contextParts = results.slice(0, 5).map((r, i) => {
-    const truncatedContent = r.fullContent?.slice(0, 3000) || r.excerpt || "";
+    // Send up to 50,000 chars per transcript to avoid cutting off relevant content
+    const fullText = r.fullContent?.slice(0, 50000) || r.excerpt || "";
     const dbName = r.databaseName || "Unknown";
-    return `--- Recording ${i + 1}: "${r.title}" (${dbName}, ${r.date}, ${r.category}) ---\n${truncatedContent}`;
+    // Include the excerpt (already centred around the keyword) as a hint
+    const excerptHint = r.excerpt
+      ? `\n[RELEVANT EXCERPT: ...${r.excerpt}...]`
+      : "";
+    return `--- Recording ${i + 1}: "${r.title}" (${dbName}, ${r.date}, ${r.category}) ---${excerptHint}\n${fullText}`;
   });
 
   const context = contextParts.join("\n\n");
 
-  const prompt = `You are analyzing meeting transcripts to answer a user's question. You have access to the following saved transcripts from Notion:
+  const prompt = `You are analyzing bilingual meeting transcripts (English + Spanish) to answer a user's question.
+The transcripts contain lines prefixed with 🇺🇸 (English original) and 🇪🇸 (Spanish translation).
 
+Transcripts:
 ${context}
 
 USER QUESTION: "${question}"
 
 INSTRUCTIONS:
-- Answer the question specifically based on the transcript content above
-- Reference which recording(s) contain the relevant information (use the title and date)
-- If a specific timestamp is visible (e.g., [05:23]), include it
-- Quote relevant parts when helpful
-- If the information isn't in any of the transcripts, say so clearly
-- Respond in the same language as the question (Spanish if question is in Spanish, English if in English)
+- ALWAYS respond entirely in Spanish, regardless of the question language
+- Answer specifically based on the transcript content above
+- Prefer quoting the 🇪🇸 Spanish translation lines over the 🇺🇸 English originals
+- Reference which recording contains the information (title and date)
+- Include the timestamp (e.g., [14:46]) when referencing a specific moment
+- If the topic is not in any transcript, say so clearly in Spanish
 - Be concise but thorough`;
 
   try {

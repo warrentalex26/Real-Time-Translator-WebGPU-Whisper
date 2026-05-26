@@ -16,7 +16,6 @@ import {
   askAboutTranscript,
   askAboutTranscriptStreaming,
   setAIProvider,
-  setGeminiApiKey,
   checkOllamaAvailable,
   getAIProvider,
   compressTranscriptBlock,
@@ -55,9 +54,6 @@ const modelButtons = document.querySelectorAll(".model-btn");
 // DOM Elements - AI Chat
 const btnOllama = document.getElementById("btn-ollama");
 const btnGemini = document.getElementById("btn-gemini");
-const geminiKeyContainer = document.getElementById("gemini-key-container");
-const geminiApiKeyInput = document.getElementById("gemini-api-key");
-const btnSaveKey = document.getElementById("btn-save-key");
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const btnSend = document.getElementById("btn-send");
@@ -96,7 +92,6 @@ async function init() {
   checkWebGPUSupport();
   setupEventListeners();
   await checkOllamaStatus();
-  loadSavedApiKey();
   loadSavedModel();
   loadAutoInsightPrefs();
   
@@ -144,16 +139,7 @@ async function checkOllamaStatus() {
   }
 }
 
-/**
- * Load saved Gemini API key from localStorage
- */
-function loadSavedApiKey() {
-  const savedKey = localStorage.getItem("gemini_api_key");
-  if (savedKey) {
-    setGeminiApiKey(savedKey);
-    geminiApiKeyInput.value = "••••••••••••••••";
-  }
-}
+
 
 /**
  * Load saved model preference from localStorage
@@ -195,8 +181,7 @@ function setupEventListeners() {
   btnOllama.addEventListener("click", () => selectAIProvider("ollama"));
   btnGemini.addEventListener("click", () => selectAIProvider("gemini"));
 
-  // Save Gemini API key
-  btnSaveKey.addEventListener("click", saveGeminiApiKey);
+
 
   // Chat input
   btnSend.addEventListener("click", sendChatMessage);
@@ -323,21 +308,9 @@ function selectAIProvider(provider) {
   setAIProvider(provider);
   btnOllama.classList.toggle("active", provider === "ollama");
   btnGemini.classList.toggle("active", provider === "gemini");
-  geminiKeyContainer.classList.toggle("hidden", provider !== "gemini");
 }
 
-/**
- * Save Gemini API key
- */
-function saveGeminiApiKey() {
-  const key = geminiApiKeyInput.value.trim();
-  if (key && !key.startsWith("•")) {
-    localStorage.setItem("gemini_api_key", key);
-    setGeminiApiKey(key);
-    geminiApiKeyInput.value = "••••••••••••••••";
-    showChatMessage(getLanguage() === "es" ? "API key guardada ✓" : "API key saved ✓", "assistant");
-  }
-}
+
 
 /**
  * Download transcript as text file
