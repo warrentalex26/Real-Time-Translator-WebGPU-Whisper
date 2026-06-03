@@ -150,6 +150,9 @@ export function createSaveModal() {
   let databases = [];
   let tags = [];
   let isLoading = false;
+  let didSave = false;
+  let _onSaveComplete = null;
+  let _onDismiss = null;
 
   // --- DOM refs ---
   const card = overlay.querySelector("#save-modal-card");
@@ -321,8 +324,14 @@ export function createSaveModal() {
    * @param {Object} options.transcriptManager — The transcript manager instance
    * @param {Function} options.onDownload — Callback for the download button
    * @param {Function} [options.generateTitleAndTags] — AI function that returns { title, tags }
+   * @param {Function} [options.onSaveComplete] — Callback after successful Notion save
+   * @param {Function} [options.onDismiss] — Callback when modal is dismissed without saving
    */
-  async function show({ transcriptManager, onDownload, generateTitleAndTags }) {
+  async function show({ transcriptManager, onDownload, generateTitleAndTags, onSaveComplete, onDismiss }) {
+    // Reset save tracking for this show cycle
+    didSave = false;
+    _onSaveComplete = onSaveComplete || null;
+    _onDismiss = onDismiss || null;
     overlay.classList.add("visible");
     document.body.style.overflow = "hidden";
 
@@ -445,7 +454,11 @@ export function createSaveModal() {
           statusText.innerHTML = `${t("saved_successfully")} <a href="${page.url}" target="_blank" rel="noopener" class="notion-link">Open in Notion ↗</a>`;
         }
 
-        setTimeout(() => hide(), 3000);
+        setTimeout(() => {
+          didSave = true;
+          if (_onSaveComplete) _onSaveComplete();
+          hide();
+        }, 3000);
       } catch (error) {
         console.error("Save to Notion failed:", error);
         setStatus("error", `${t("save_failed")}: ${error.message}`);
@@ -477,6 +490,8 @@ export function createSaveModal() {
   function hide() {
     overlay.classList.remove("visible");
     document.body.style.overflow = "";
+    // Fire onDismiss only if we didn't save successfully
+    if (!didSave && _onDismiss) _onDismiss();
   }
 
   return { show, hide };

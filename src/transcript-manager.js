@@ -2,11 +2,16 @@
  * Transcript Manager
  * Handles storing and exporting transcription data
  * Supports incremental compression for long meetings
+ * Includes auto-save to localStorage for crash recovery
  */
 
 // Compression thresholds
 const COMPRESS_THRESHOLD = 30; // Compress every 30 new uncompressed entries
 const RECENT_WINDOW = 40; // Keep last 40 entries in detail for AI context
+
+// Auto-save configuration
+const AUTOSAVE_KEY = "transcript_autosave";
+const AUTOSAVE_DEBOUNCE_MS = 5000; // Save at most every 5 seconds
 
 class TranscriptManager {
   constructor() {
@@ -15,6 +20,7 @@ class TranscriptManager {
     this.compressedSummaries = []; // Array of { summary, fromIndex, toIndex, timestamp }
     this.lastCompressedIndex = 0; // Index up to which entries have been compressed
     this._compressionInProgress = false;
+    this._autoSaveTimer = null;
   }
 
   /**
@@ -26,6 +32,8 @@ class TranscriptManager {
     this.compressedSummaries = [];
     this.lastCompressedIndex = 0;
     this._compressionInProgress = false;
+    this._autoSaveTimer = null;
+    this._saveAutoSaveSnapshot(); // Persist session start immediately
   }
 
   /**
@@ -41,6 +49,7 @@ class TranscriptManager {
       translated: translated,
     };
     this.entries.push(entry);
+    this._scheduleAutoSave();
     return entry;
   }
 
@@ -262,6 +271,7 @@ class TranscriptManager {
     this.compressedSummaries = [];
     this.lastCompressedIndex = 0;
     this._compressionInProgress = false;
+    this.clearAutoSave();
   }
 
   /**
@@ -271,7 +281,121 @@ class TranscriptManager {
   get count() {
     return this.entries.length;
   }
-}
 
-// Export singleton instance
+  // ============================================
+  // Auto-Save & Recovery
+  // ============================================
+
+  /**
+   * Schedule a debounced auto-save to localStorage.
+   * Prevents writing on every single entry — batches within AUTOSAVE_DEBOUNCE_MS.
+   */
+  _scheduleAutoSave() {
+    if (this._autoSaveTimer) return; // Already scheduled
+    this._autoSaveTimer = setTimeout(() => {
+      this._autoSaveTimer = null;
+      this._saveAutoSaveSnapshot();
+    }, AUTOSAVE_DEBOUNCE_MS);
+  }
+
+  /**
+   * Immediately persist the current transcript state to localStorage.
+   */
+  _saveAutoSaveSnapshot() {
+    try {
+      const snapshot = {
+        entries: this.entries.map((e) => ({
+          timestamp: e.timestamp instanceof Date ? e.timestamp.toISOString() : e.timestamp,
+          relativeTime: e.relativeTime,
+          original: e.original,
+          translated: e.translated,
+        })),
+        sessionStartTime: this.sessionStartTime?.toISOString() ?? null,
+        compressedSummaries: this.compressedSummaries,
+        lastCompressedIndex: this.lastCompressedIndex,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(snapshot));
+    } catch (error) {
+      console.warn("Auto-save failed:", error);
+    }
+  }
+
+  /**
+   * Force an immediate auto-save (e.g., on beforeunload).
+   */
+  forceAutoSave() {
+    if (this._autoSaveTimer) {
+      clearTimeout(this._autoSaveTimer);
+      this._autoSaveTimer = null;
+    }
+    this._saveAutoSaveSnapshot();
+  }
+
+  /**
+   * Clear the auto-save data from localStorage.
+   * Called when the user stops recording normally.
+   */
+  clearAutoSave() {
+    if (this._autoSaveTimer) {
+      clearTimeout(this._autoSaveTimer);
+      this._autoSaveTimer = null;
+    }
+    try {
+      localStorage.removeItem(AUTOSAVE_KEY);
+    } catch (error) {
+      console.warn("Failed to clear auto-save:", error);
+    }
+  }
+
+  /**
+   * Check if there is a recoverable session in localStorage.
+   * @returns {{ entries: number, savedAt: string } | null}
+   */
+  static hasRecoverableSession() {
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if (!raw) return null;
+      const snapshot = JSON.parse(raw);
+      if (!snapshot.entries || snapshot.entries.length === 0) return null;
+      return {
+        entries: snapshot.entries.length,
+        savedAt: snapshot.savedAt,
+        sessionStartTime: snapshot.sessionStartTime,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Recover a session from localStorage into this TranscriptManager instance.
+   * @returns {boolean} true if recovery succeeded
+   */
+  recoverSession() {
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if (!raw) return false;
+      const snapshot = JSON.parse(raw);
+
+      this.entries = (snapshot.entries || []).map((e) => ({
+        ...e,
+        timestamp: new Date(e.timestamp),
+      }));
+      this.sessionStartTime = snapshot.sessionStartTime
+        ? new Date(snapshot.sessionStartTime)
+        : null;
+      this.compressedSummaries = snapshot.compressedSummaries || [];
+      this.lastCompressedIndex = snapshot.lastCompressedIndex || 0;
+      this._compressionInProgress = false;
+
+      return this.entries.length > 0;
+    } catch (error) {
+      console.error("Session recovery failed:", error);
+      return false;
+    }
+  }
+}
+// Export singleton instance and class (class needed for static methods)
 export const transcriptManager = new TranscriptManager();
+export { TranscriptManager };

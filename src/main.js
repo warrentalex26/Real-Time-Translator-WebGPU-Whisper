@@ -27,6 +27,10 @@ import { Header } from "./components/shared/Header.js";
 import { Footer } from "./components/shared/Footer.js";
 import { createSaveModal } from "./components/SaveModal.js";
 import { AI_CONFIG } from "./ai/config.js";
+import {
+  createBeforeUnloadHandler,
+  checkForRecoverableSession,
+} from "./components/SessionRecovery.js";
 
 // Inject shared components first
 const appHeader = document.getElementById("app-header");
@@ -100,6 +104,13 @@ async function init() {
   
   // Listen for language changes to update specific UI parts
   document.addEventListener("languageChanged", updateDynamicUI);
+
+  // Check for interrupted recording sessions
+  checkForRecoverableSession({
+    saveModal,
+    onDownload: () => transcriptManager.downloadAsFile("bilingual"),
+    generateTitleAndTags: generateRecordingTitleAndTags,
+  });
 }
 
 function updateDynamicUI() {
@@ -406,6 +417,9 @@ async function startRecording() {
     if (autoInsightEnabled) {
       startAutoInsightTimer();
     }
+
+    // Protect against accidental tab close
+    window.addEventListener("beforeunload", handleBeforeUnload);
   } catch (error) {
     console.error("Error starting recording:", error);
     showError(error.message);
@@ -452,8 +466,15 @@ function stopRecording() {
       transcriptManager,
       onDownload: () => transcriptManager.downloadAsFile("bilingual"),
       generateTitleAndTags: generateRecordingTitleAndTags,
+      onSaveComplete: () => transcriptManager.clearAutoSave(),
+      onDismiss: () => transcriptManager.clearAutoSave(),
     });
+  } else {
+    transcriptManager.clearAutoSave();
   }
+
+  // Remove tab-close protection
+  window.removeEventListener("beforeunload", handleBeforeUnload);
 }
 
 /**
@@ -918,3 +939,6 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// beforeunload handler instance (created once, reused)
+const handleBeforeUnload = createBeforeUnloadHandler(() => isRecording);

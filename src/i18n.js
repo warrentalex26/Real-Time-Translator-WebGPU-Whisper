@@ -97,7 +97,13 @@ export const translations = {
     "no_results_hint": "Try different keywords or search in a different project.",
     "search_error": "Search error",
     "no_ai_response": "Could not generate an AI response.",
-    "found_in_transcripts": "Found in the following transcripts"
+    "found_in_transcripts": "Found in the following transcripts",
+
+    "recovery_banner_title": "Unsaved Recording Found",
+    "recovery_banner_message": "A previous recording session was interrupted. {count} entries from {date} can be recovered.",
+    "recovery_restore": "Restore & Save",
+    "recovery_discard": "Discard",
+    "recovery_restored": "Session recovered successfully."
   },
   es: {
     "title": "Traductor en Tiempo Real",
@@ -197,7 +203,13 @@ export const translations = {
     "no_results_hint": "Intenta con otras palabras clave o busca en otro proyecto.",
     "search_error": "Error de búsqueda",
     "no_ai_response": "No se pudo generar una respuesta de IA.",
-    "found_in_transcripts": "Encontrado en las siguientes transcripciones"
+    "found_in_transcripts": "Encontrado en las siguientes transcripciones",
+
+    "recovery_banner_title": "Grabación sin guardar encontrada",
+    "recovery_banner_message": "Una sesión de grabación anterior fue interrumpida. {count} entradas del {date} pueden ser recuperadas.",
+    "recovery_restore": "Restaurar y Guardar",
+    "recovery_discard": "Descartar",
+    "recovery_restored": "Sesión recuperada exitosamente."
   }
 };
 
