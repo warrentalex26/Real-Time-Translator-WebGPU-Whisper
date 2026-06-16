@@ -30,7 +30,7 @@ When the user asks about earlier topics, use the SUMMARIES section.
 MEETING TRANSCRIPT:
 ${transcriptContext}
 
-Answer questions about this transcript in Spanish (the user prefers Spanish responses). When quoting what was said, include the original English text from the transcript.`;
+Answer questions about this transcript ENTIRELY in Spanish. When quoting what someone said, TRANSLATE the quote to Spanish — do NOT include the original English text. Only keep the timestamps (e.g., [03:55]) as-is. Your entire response must be in Spanish, with no English words or phrases.`;
 }
 
 /**
